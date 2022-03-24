@@ -1,7 +1,10 @@
-## Preparing area-level mobility data
+## Preparing area-level mobility data - Output areas
 
 # Housekeeping
-library(pacman)
+# clear R environment
+rm(list = ls())
+
+#load packages
 pacman::p_load(haven, 
                dplyr, 
                survey, 
@@ -13,25 +16,31 @@ pacman::p_load(haven,
                ggplot2, 
                apyramid,
                magrittr, 
-               stringr)
+               stringr, 
+               here)
 
 # set working directory (local/fixed pathway)
-setwd("M:/Analytics/Francesca/Mobility data")
+  #NOTE: obsolete since project sets wd and using "here"
+  #setwd("M:/Analytics/Francesca/Mobility_data")
+here()
+
 
 # import all data
-eastdta <- import("censusmig_OA_East.csv")
-emdta <- import("censusmig_OA_EastMidlands.csv")
-londondta <- import("censusmig_OA_London.csv")
-nedta <- import("censusmig_OA_NorthEast.csv")
-nwdta <- import("censusmig_OA_NorthWest.csv")
-sedta <- import("censusmig_OA_SouthEast.csv")
-swdta <- import("censusmig_OA_SouthWest.csv")
-wmdta <- import("censusmig_OA_WestMidlands.csv")
-yhdta <- import("censusmig_OA_YorkshireHumber.csv")
+  ## data were downloaded from: https://www.nomisweb.co.uk/census/2011/ukmig008
+eastdta <- import(here("data", "censusmig_OA_East.csv"))
+emdta <- import(here("data", "censusmig_OA_EastMidlands.csv"))
+londondta <- import(here("data", "censusmig_OA_London.csv"))
+nedta <- import(here("data", "censusmig_OA_NorthEast.csv"))
+nwdta <- import(here("data", "censusmig_OA_NorthWest.csv"))
+sedta <- import(here("data", "censusmig_OA_SouthEast.csv"))
+swdta <- import(here("data", "censusmig_OA_SouthWest.csv"))
+wmdta <- import(here("data", "censusmig_OA_WestMidlands.csv"))
+yhdta <- import(here("data", "censusmig_OA_YorkshireHumber.csv"))
 
 # append all datasets together
 eng_dta <- rbind(eastdta, emdta, londondta, nedta, nwdta, sedta, swdta, wmdta, yhdta)
 
+dim(eng_dta)      #24 variables, 171372 observations
 table(eng_dta$date)
 
 # tidy variables names
@@ -51,7 +60,7 @@ eng_dta <- rename(eng_dta, n_outmig = Migrationethnic.group.Moved.out.of.the.are
 eng_dta <- eng_dta %>% 
   dplyr::select(1:10) 
 
-#alternative code
+#alternative code - ignore, done in command lines 50/51
 # p_load(data.table)
 # eng_dta <- as.data.table(eng_dta)
 # eng_dta <- eng_dta[, 1:10] #first arg = rows, second = cols, third = group by
@@ -60,15 +69,25 @@ head(eng_dta)
 
 class(eng_dta$n_samead)
 
-#loop 
-for (i in c(1:10)) {
-  tabyl(eng_dta[, i])
+#trying to get loops to work - tabulate a list of variable 
+for (i in c(3:10)) {
+  i
+  print(tabyl(eng_dta[, i]))
 }
 
-eng_dta[, i]
-i
-# assigned 1 to i but doesn't print the right column
-# check functions sent by Jay
+# or with variable names
+varlist <- c("n_outmig", "n_usualres", "n_totalmig")
+for (i in varlist) {
+  print(tabyl(eng_dta[, i]))
+}
+
+
+# or with lapply
+varlist <- c("n_outmig", "n_usualres", "n_totalmig")
+lapply(eng_dta[varlist], tabyl)
+
+  #Jay uses tableone instead of tabyl for tabulations, check out links (bookmarked)
+
 
 
 # Describe size of OAs
@@ -107,37 +126,43 @@ sum(eng_dta$net_migration >= 10) #10630
 
 sum(eng_dta$net_migration <= -5) #1381
 12325/171372 #7.2% 
+  # probably makes more sense to use 5% cut-off for high in/out-migration areas (see other paper by Brown mentioned by Anne)
 
 
-# Calculate turnover (inverse of % living at same address one year ago)
+# Calculate turnover as % of current residents who lived outside the area one year ago
+  # this includes people moving in from elsewhere in UK and abroad (but not within the area)
+  # Brown et al. exclude people who'd moved from abroad in one of their papers, do we want to do the same? 
+
 eng_dta <- eng_dta %>% 
-  mutate(turnover = n_totalmig/n_usualres*100)
+  mutate(turnover = (n_miguk + n_migfor)/n_usualres*100)
 summary(eng_dta$turnover)
-  #median turnover = 9.7% (a little lower than 16% turnover in previous year in Brown study for Scotland)
+  #median turnover = 9.6% (lower than 16% turnover in previous year in Brown study for Scotland)
 
 
 # Create variable with mobility categories
   # below does not work
-eng_dta$mob_cat <- as.factor(ifelse(eng_dta$net_migration <= -10, 'Decreasing', 
-                            ifelse(eng_dta$net_migration >= 10, 'Increasing',
-                            ifelse(eng_dta$turnover >= 9.7, 'Stable, high turnover',
-                            ifelse(eng_dta$turnover <9.7, 'Stable, low turnover', 'Error' )))))       
+eng_dta$mob_cat <- as.factor(ifelse(eng_dta$net_migration <= -5, 'Decreasing', 
+                            ifelse(eng_dta$net_migration >= 5, 'Increasing',
+                            ifelse(eng_dta$turnover >= 9.6, 'Stable, high turnover',
+                            ifelse(eng_dta$turnover <9.6, 'Stable, low turnover', 'Error' )))))       
   
 eng_dta <- eng_dta %>%
   mutate(mob_cat = case_when(
-    net_migration <= -10 ~ "Decreasing",
-    net_migration >= 10 ~ "Increasing",
-    net_migration > -10 & net_migration < 10 & turnover >= 9.7 ~ "Stable, high turnover",
-    net_migration > -10 & net_migration < 10 & turnover <9.7 ~ "Stable, low turnover"
+    net_migration <= -5 ~ "Decreasing",
+    net_migration >= 5 ~ "Increasing",
+    net_migration > -5 & net_migration < 5 & turnover >= 9.6 ~ "Stable, high turnover",
+    net_migration > -5 & net_migration < 5 & turnover <9.6 ~ "Stable, low turnover"
   ))
+  
+#Advice from Jay: 
   # stay away from factors, use as.character instead 
   # if want to use it as factor, transform it at the very end 
-  # only use factor for ordered categorical, does some weird things
-  # can write levels within as.factor so knows the order
-  # if region/religion (unordered categorical), use character unless want them displayed in specific order
+  # only use factor for ordered categorical, does some weird things for graphs etc. 
+  # can write levels within as.factor so R knows the order in which categories should be displayed
+  # if unordered categorical (e.g. region/religion), use character unless want them displayed in specific order
 
 
 # Tab variable
 tabyl(eng_dta$mob_cat)
-  # Stable, low turnover accounts for 49% of all OAs
+  # Stable, low turnover accounts for 44% of all OAs in England for period 2010-11
 
