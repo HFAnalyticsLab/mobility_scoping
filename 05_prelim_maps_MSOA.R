@@ -9,6 +9,7 @@ pacman::p_load(sf,
 
 # read OA boundaries
     # Option 1: manually download all data to "shapefiles" folder in R workspace
+    # then run command below to load data
 # msoa_shp <- st_read(here("shapefiles", "Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.shp"))
 
 # Option 2: trying command above with save_object to save directly into R workspace without manually downloading
