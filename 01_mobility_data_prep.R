@@ -5,6 +5,9 @@
 rm(list = ls())
 
 #load packages
+library(data.table)
+library(aws.s3)
+
 pacman::p_load(haven, 
                dplyr, 
                survey, 
@@ -27,15 +30,47 @@ here()
 
 # import all data
   ## data were downloaded from: https://www.nomisweb.co.uk/census/2011/ukmig008
-eastdta <- import(here("data", "censusmig_OA_East.csv"))
-emdta <- import(here("data", "censusmig_OA_EastMidlands.csv"))
-londondta <- import(here("data", "censusmig_OA_London.csv"))
-nedta <- import(here("data", "censusmig_OA_NorthEast.csv"))
-nwdta <- import(here("data", "censusmig_OA_NorthWest.csv"))
-sedta <- import(here("data", "censusmig_OA_SouthEast.csv"))
-swdta <- import(here("data", "censusmig_OA_SouthWest.csv"))
-wmdta <- import(here("data", "censusmig_OA_WestMidlands.csv"))
-yhdta <- import(here("data", "censusmig_OA_YorkshireHumber.csv"))
+  ## can't figure out how to download directly/find the URL for different CSVs
+
+buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data' ## my bucket name
+
+## load things to the environment directly from s3 bucket
+eastdta <- s3read_using(import # Which function are we using to read
+             , object = 'censusmig_OA_East.csv' # File to open
+             , bucket = buck) # Bucket name defined above
+
+emdta <- s3read_using(import # Which function are we using to read
+                        , object = 'censusmig_OA_EastMidlands.csv' # File to open
+                        , bucket = buck) # Bucket name defined above
+
+londondta <- s3read_using(import # Which function are we using to read
+                      , object = 'censusmig_OA_London.csv' # File to open
+                      , bucket = buck) # Bucket name defined above
+
+nedta <- s3read_using(import # Which function are we using to read
+                          , object = 'censusmig_OA_NorthEast.csv' # File to open
+                          , bucket = buck) # Bucket name defined above
+
+nwdta <- s3read_using(import # Which function are we using to read
+                      , object = 'censusmig_OA_NorthWest.csv' # File to open
+                      , bucket = buck) # Bucket name defined above
+
+sedta <- s3read_using(import # Which function are we using to read
+                      , object = 'censusmig_OA_SouthEast.csv' # File to open
+                      , bucket = buck) # Bucket name defined above
+
+swdta <- s3read_using(import # Which function are we using to read
+                      , object = 'censusmig_OA_SouthWest.csv' # File to open
+                      , bucket = buck) # Bucket name defined above
+
+wmdta <- s3read_using(import # Which function are we using to read
+                      , object = 'censusmig_OA_WestMidlands.csv' # File to open
+                      , bucket = buck) # Bucket name defined above
+
+yhdta <- s3read_using(import # Which function are we using to read
+                      , object = 'censusmig_OA_YorkshireHumber.csv' # File to open
+                      , bucket = buck) # Bucket name defined above
+
 
 # append all datasets together
 eng_dta <- rbind(eastdta, emdta, londondta, nedta, nwdta, sedta, swdta, wmdta, yhdta)
