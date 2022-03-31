@@ -8,7 +8,7 @@ pacman::p_load(sf,
                THFstyle)
 
 # read OA boundaries
-msoa_shp <- st_read(here("data", "MSOA_shapefile_data", "Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.shp"))
+msoa_shp <- st_read(here("Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.shp"))
 
 
 str(msoa_shp)

@@ -2,12 +2,25 @@
 # Run this script after 01_mobility_data_prep
 
 # load packages
+install.packages('BiocManager')
 pacman::p_load(sf,
                XML,
                tmap,
                THFstyle)
 
 # read OA boundaries
+buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/OA_shapefile_data' ## my bucket name
+
+# attempt to import shp data
+  ## command does not work
+  ## error message: Error in parse_aws_s3_response(r, Sig, verbose = verbose) : 
+  ## Forbidden (HTTP 403).
+
+oa_shp <- s3read_using(st_read # Which function are we using to read
+                        , object = 'Output_Areas__December_2011__Boundaries_EW_BFC.shp' # File to open
+                        , bucket = buck) # Bucket name defined above
+
+# original command in ODE
 oa_shp <- st_read(here("data", "OA_shapefile_data", "Output_Areas__December_2011__Boundaries_EW_BFC.shp"))
 
 
