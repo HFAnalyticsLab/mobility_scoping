@@ -8,8 +8,26 @@ pacman::p_load(sf,
                THFstyle)
 
 # read OA boundaries
-msoa_shp <- st_read(here("Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.shp"))
+    # Option 1: manually download all data to "shapefiles" folder in R workspace
+# msoa_shp <- st_read(here("shapefiles", "Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.shp"))
 
+# Option 2: trying command above with save_object to save directly into R workspace without manually downloading
+  # Need to download all 6 files in folder for .shp to load correctly
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.shp',
+            file = here("shapefiles", "eng.shp"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.cpg',
+            file = here("shapefiles", "eng.cpg"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.dbf',
+            file = here("shapefiles", "eng.dbf"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.prj',
+            file = here("shapefiles", "eng.prj"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.shx',
+            file = here("shapefiles", "eng.shx"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.xml',
+            file = here("shapefiles", "eng.xml"))
+
+# load shp data
+msoa_shp <- st_read(here("shapefiles", "eng.shp"))
 
 str(msoa_shp)
 
@@ -52,7 +70,7 @@ map3 <- tm_shape(msoa_shp) +
             legend.bg.alpha = 1)
 map3
 tmap_save(map3, here("outputs", "map3_mobility_MSOAs.tiff"))
-
+  # Note: need to figure out how to export maps with sw3 commands
 
 
 # Make maps for selected metro areas - London
@@ -92,3 +110,4 @@ tm_shape(test) +
             legend.position = c("right","top"),
             legend.bg.color = "white",
             legend.bg.alpha = 1)
+
