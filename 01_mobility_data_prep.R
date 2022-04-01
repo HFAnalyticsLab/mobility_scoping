@@ -101,6 +101,12 @@ table(eng_dta$date)
 names(eng_dta)<-str_replace_all(names(eng_dta), c(" " = "." , "," = "" , ";" = "" , "/" = "" , ":" = ""))
   #remove spaces so that we can refer to column names in functions
 
+# eng_dta<-eng_dta %>%
+#   clean_names() %>% 
+#   select(1:10) 
+# 
+# names(eng_dta)[4:10]<-c('n_usualres','n_samead', 'n_totalmig','n_migwithin','n_miguk','n_migfor','n_outmig')
+
 eng_dta <- rename(eng_dta, n_samead = Migrationethnic.group.Lived.at.same.address.one.year.ago.measures.Value)
 eng_dta <- rename(eng_dta, n_usualres = Migrationethnic.group.All.usual.residents.measures.Value)
 eng_dta <- rename(eng_dta, n_totalmig = Migrationethnic.group.Migrants.Total.measures.Value)
