@@ -15,20 +15,20 @@ pacman::p_load(sf,
 # Option 2: trying command above with save_object to save directly into R workspace without manually downloading
   # Need to download all 6 files in folder for .shp to load correctly
 save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.shp',
-            file = here("shapefiles", "eng.shp"))
+            file = here::here("shapefiles", "eng.shp"))
 save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.cpg',
-            file = here("shapefiles", "eng.cpg"))
+            file = here::here("shapefiles", "eng.cpg"))
 save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.dbf',
-            file = here("shapefiles", "eng.dbf"))
+            file = here::here("shapefiles", "eng.dbf"))
 save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.prj',
-            file = here("shapefiles", "eng.prj"))
+            file = here::here("shapefiles", "eng.prj"))
 save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.shx',
-            file = here("shapefiles", "eng.shx"))
+            file = here::here("shapefiles", "eng.shx"))
 save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.xml',
-            file = here("shapefiles", "eng.xml"))
+            file = here::here("shapefiles", "eng.xml"))
 
 # load shp data
-msoa_shp <- st_read(here("shapefiles", "eng.shp"))
+msoa_shp <- st_read(here::here("shapefiles", "eng.shp"))
 
 str(msoa_shp)
 
