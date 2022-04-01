@@ -26,7 +26,8 @@ here()
 
 # import all data
 ## data were downloaded from: https://www.nomisweb.co.uk/census/2011/ukmig008
-eng_dta <- import(here("data", "censusmig_MSOA_England.csv"))
+eng_dta <- s3read_using(import, 
+                        object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/censusmig_MSOA_England.csv') # File to open 
 
 dim(eng_dta)      #24 variables, 7201 observations
 table(eng_dta$date)
