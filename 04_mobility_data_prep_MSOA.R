@@ -128,4 +128,12 @@ eng_dta <- eng_dta %>%
 tabyl(eng_dta$mob_cat)
 # Stable, low turnover accounts for 42% of all MSOAs in England for period 2010-11
 
+#Save dataset 
+
+buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
+
+s3write_using(eng_dta # What R object we are saving
+              , FUN = write_rds # Which R function we are using to save
+              , object = 'eng_dta_MSOA.RDS' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above
 
