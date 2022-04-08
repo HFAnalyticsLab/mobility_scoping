@@ -1,6 +1,10 @@
 ## Preliminary maps - Middle Layer Super Output Area level
 # Run this script after 04_mobility_data_prep_MSOA
 
+# Housekeeping
+# clear R environment
+rm(list = ls())
+
 # load packages
 pacman::p_load(sf,
                XML,
@@ -32,9 +36,19 @@ msoa_shp <- st_read(here::here("shapefiles", "eng.shp"))
 
 str(msoa_shp)
 
+
+#load mobility MSOA data
+buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
+
+eng_dta<-s3read_using(readRDS # Which function are we using to read
+             , object = 'eng_dta_MSOA.RDS' # File to open
+             , bucket = buck) # Bucket name defined above
+
+
+
 # Join spatial data
 msoa_shp <- left_join(msoa_shp, eng_dta, by = c("MSOA11CD" = "geography.code"))
-  # geography.code is the MSOA code in the eng_dta df and MSOA11CD the code in the shapefile data
+# geography.code is the MSOA code in the eng_dta df and MSOA11CD the code in the shapefile data
   
 
 
