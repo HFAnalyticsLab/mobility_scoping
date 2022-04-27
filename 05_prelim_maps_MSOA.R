@@ -72,6 +72,7 @@ map3 <- tm_shape(msoa_shp) +
 map3
 tmap_save(map3, here("outputs", "map3_mobility_MSOAs.tiff"))
   # Note: need to figure out how to export maps with sw3 commands
+  # + scale_fill_manual to set category colours manually
 
 
 # Make maps for selected metro areas - London
