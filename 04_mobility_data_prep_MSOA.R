@@ -34,7 +34,13 @@ table(eng_dta$date)
 
 # tidy variables names
 names(eng_dta)<-str_replace_all(names(eng_dta), c(" " = "." , "," = "" , ";" = "" , "/" = "" , ":" = ""))
-  #remove spaces so that we can refer to column names in functions
+  #remove spaces so that we can refer to column names in functions]
+
+# eng_dta<-eng_dta %>%
+#   clean_names() %>% 
+#   select(1:10) 
+
+names(eng_dta)[4:10]<-c('n_usualres','n_samead', 'n_totalmig','n_migwithin','n_miguk','n_migfor','n_outmig')
 
 eng_dta <- rename(eng_dta, n_samead = Migrationethnic.group.Lived.at.same.address.one.year.ago.measures.Value)
 eng_dta <- rename(eng_dta, n_usualres = Migrationethnic.group.All.usual.residents.measures.Value)
@@ -122,4 +128,12 @@ eng_dta <- eng_dta %>%
 tabyl(eng_dta$mob_cat)
 # Stable, low turnover accounts for 42% of all MSOAs in England for period 2010-11
 
+#Save dataset 
+
+buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
+
+s3write_using(eng_dta # What R object we are saving
+              , FUN = write_rds # Which R function we are using to save
+              , object = 'eng_dta_MSOA.RDS' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above
 
