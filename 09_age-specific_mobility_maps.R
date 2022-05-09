@@ -112,3 +112,65 @@ map9_4 <- tm_shape(msoa_shp) +
 map9_4
 
 
+# Make maps for selected metro areas - London
+msoa_shp %>% 
+  filter(substring(MSOA11CD, 2) < '02000983' & str_detect(MSOA11CD, 'E')) %>%
+  tabyl(MSOA11NM)
+
+ldn_msoa_shp <- msoa_shp %>% 
+  dplyr::filter(, substring(MSOA11CD, 2) < '02000983' & str_detect(MSOA11CD, 'E')) 
+
+
+
+# Map 9.5 - age of non-movers - London
+map9_5 <- tm_shape(ldn_msoa_shp) +
+  tm_borders(, alpha=0) +
+  tm_fill(col = "meanage_samead", style = "cont", palette = "viridis", title = "Mean age non-movers") +
+  tm_borders(lwd = 0)  +
+  tm_layout(legend.title.size = 0.8,
+            legend.text.size = 0.6,
+            legend.position = c("left","top"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+map9_5
+
+
+# Map 9.6 - age of inmigrants - London
+map9_6 <- tm_shape(ldn_msoa_shp) +
+  tm_borders(, alpha=0) +
+  tm_fill(col = "meanage_totalmig", style = "cont", palette = "viridis", title = "Mean age inmigrants") +
+  tm_borders(lwd = 0)  +
+  tm_layout(legend.title.size = 0.8,
+            legend.text.size = 0.6,
+            legend.position = c("left","bottom"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+map9_6
+
+
+# Map 9.7 - age of outmigrants - London
+map9_7 <- tm_shape(ldn_msoa_shp) +
+  tm_borders(, alpha=0) +
+  tm_fill(col = "meanage_outmig", style = "cont", palette = "viridis", title = "Mean age outmigrants") +
+  tm_borders(lwd = 0)  +
+  tm_layout(legend.title.size = 0.8,
+            legend.text.size = 0.6,
+            legend.position = c("left","bottom"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+map9_7
+
+
+
+# Map 9.8 - difference in mean age - London
+pal <- wes_palette("Zissou1", 100, type = "continuous")
+map9_8 <- tm_shape(ldn_msoa_shp) +
+  tm_borders(, alpha=0) +
+  tm_fill(col = "meanage_diff", style = "cont", palette = pal, title = "Difference mean age") +
+  tm_borders(lwd = 0)  +
+  tm_layout(legend.title.size = 0.8,
+            legend.text.size = 0.6,
+            legend.position = c("left","bottom"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+map9_8
