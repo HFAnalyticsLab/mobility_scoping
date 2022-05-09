@@ -1,5 +1,4 @@
-## Preliminary maps - Middle Layer Super Output Area level
-# Run this script after 04_mobility_data_prep_MSOA
+## Preliminary maps - age-specific mobility - Middle Layer Super Output Area level
 
 # Housekeeping
 # clear R environment
@@ -9,15 +8,11 @@ rm(list = ls())
 pacman::p_load(sf,
                XML,
                tmap,
-               THFstyle)
+               THFstyle,
+               viridis, 
+               wesanderson)
 
-# read OA boundaries
-    # Option 1: manually download all data to "shapefiles" folder in R workspace
-    # then run command below to load data
-# msoa_shp <- st_read(here("shapefiles", "Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.shp"))
-
-# Option 2: trying command above with save_object to save directly into R workspace without manually downloading
-  # Need to download all 6 files in folder for .shp to load correctly
+# Download and load shapefile data
 save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.shp',
             file = here::here("shapefiles", "eng.shp"))
 save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.cpg',
@@ -34,22 +29,21 @@ save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mr
 # load shp data
 msoa_shp <- st_read(here::here("shapefiles", "eng.shp"))
 
+
 str(msoa_shp)
 
 
 #load mobility MSOA data
 buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
 
-eng_dta<-s3read_using(readRDS # Which function are we using to read
-             , object = 'eng_dta_MSOA.RDS' # File to open
-             , bucket = buck) # Bucket name defined above
-
-
+age_dta<-s3read_using(readRDS # Which function are we using to read
+                      , object = 'eng_age_dta_MSOA.RDS' # File to open
+                      , bucket = buck) # Bucket name defined above
 
 # Join spatial data
-msoa_shp <- left_join(msoa_shp, eng_dta, by = c("MSOA11CD" = "geography.code"))
+msoa_shp <- left_join(msoa_shp, age_dta, by = c("MSOA11CD" = "geography.code"))
 # geography.code is the MSOA code in the eng_dta df and MSOA11CD the code in the shapefile data
-  
+
 
 
 # id for country name initial
@@ -57,14 +51,6 @@ msoa_shp <- left_join(msoa_shp, eng_dta, by = c("MSOA11CD" = "geography.code"))
 msoa_shp$ctry_nm <- substr(msoa_shp$MSOA11CD, 1, 1)
 msoa_shp$ctry_nm <- as.factor(msoa_shp$ctry_nm)
 
-# simplify boundaries
-msoa_shp_simple <- st_simplify(msoa_shp, 
-                             preserveTopology =T,
-                             dTolerance = 1000) # 1km
-
-# ensure geometry is valid
-msoa_shp_simple <- sf::st_make_valid(msoa_shp_simple)
-  # not sure what this command does (from the geographic data science practical)
 
 
 # Prepare THF colour scheme
@@ -73,57 +59,56 @@ grDevices::palette(pal_THF)
 # not sure what the palette command does
 
 
-# Map 3 - map of mobility categories - without simplified boundaries
-map3 <- tm_shape(msoa_shp) +
+# Map 9.1 - map of mean age among residents living at same address one year ago
+map9_1 <- tm_shape(msoa_shp) +
   tm_borders(, alpha=0) +
-  tm_fill(col = "mob_cat", style = "cat", palette = pal_THF, title = "Mobility category") +
+  tm_fill(col = "meanage_samead", style = "cont", palette = "viridis", title = "Mean age non-movers") +
   tm_borders(lwd = 0)  +
-  tm_layout(legend.title.size = 1,
+  tm_layout(legend.title.size = 0.8,
             legend.text.size = 0.6,
-            legend.position = c("right","top"),
+            legend.position = c("left","top"),
             legend.bg.color = "white",
             legend.bg.alpha = 1)
-map3
-tmap_save(map3, here("outputs", "map3_mobility_MSOAs.tiff"))
-  # Note: need to figure out how to export maps with sw3 commands
-  # + scale_fill_manual to set category colours manually
+map9_1
 
 
-# Make maps for selected metro areas - London
-msoa_shp %>% 
-  filter(substring(MSOA11CD, 2) < '02000983' & str_detect(MSOA11CD, 'E')) %>%
-  tabyl(MSOA11NM)
-
-ldn_msoa_shp <- msoa_shp %>% 
-  dplyr::filter(, substring(MSOA11CD, 2) < '02000983' & str_detect(MSOA11CD, 'E')) 
-
-
-
-# Map 4 - map of mobility categories - London
-map4 <- tm_shape(ldn_msoa_shp) +
+# Map 9.2 - map of mean age among in-migrants
+map9_2 <- tm_shape(msoa_shp) +
   tm_borders(, alpha=0) +
-  tm_fill(col = "mob_cat", style = "cat", palette = pal_THF, title = "Mobility category") +
+  tm_fill(col = "meanage_totalmig", style = "cont", palette = "viridis", title = "Mean age in-migrants") +
   tm_borders(lwd = 0)  +
-  tm_layout(legend.title.size = 1,
+  tm_layout(legend.title.size = 0.8,
             legend.text.size = 0.6,
-            legend.position = c("right","top"),
+            legend.position = c("left","top"),
             legend.bg.color = "white",
             legend.bg.alpha = 1)
-map4
-tmap_save(map4, here("outputs", "map4_mobility_MSOAs_London.tiff"))
+map9_2
 
 
-
-# Closer look at Hackney out of curiosity
-test <- msoa_shp %>% 
-  dplyr::filter(, str_detect(MSOA11NM, 'Hackney')) 
-tm_shape(test) +
+# Map 9.3 - map of mean age among outmigrants
+map9_3 <- tm_shape(msoa_shp) +
   tm_borders(, alpha=0) +
-  tm_fill(col = "mob_cat", style = "cat", palette = pal_THF, title = "Mobility category") +
+  tm_fill(col = "meanage_outmig", style = "cont", palette = "viridis", title = "Mean age out-migrants") +
   tm_borders(lwd = 0)  +
-  tm_layout(legend.title.size = 1,
+  tm_layout(legend.title.size = 0.8,
             legend.text.size = 0.6,
-            legend.position = c("right","top"),
+            legend.position = c("left","top"),
             legend.bg.color = "white",
             legend.bg.alpha = 1)
+map9_3
+
+
+# Map 9.4 - map of difference in meant age of inmigrants and outmigrants
+pal <- wes_palette("Zissou1", 100, type = "continuous")
+map9_4 <- tm_shape(msoa_shp) +
+  tm_borders(, alpha=0) +
+  tm_fill(col = "meanage_diff", style = "cont", palette = pal, title = "Mean age difference") +
+  tm_borders(lwd = 0)  +
+  tm_layout(legend.title.size = 0.8,
+            legend.text.size = 0.6,
+            legend.position = c("left","top"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+map9_4
+
 

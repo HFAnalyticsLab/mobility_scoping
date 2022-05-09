@@ -9,7 +9,7 @@ pacman::p_load(sf,
                THFstyle)
 
 # read OA boundaries
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/OA_shapefile_data' ## my bucket name
+buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp' ## my bucket name
 
 # attempt to import shp data
   ## command does not work
@@ -17,9 +17,9 @@ buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Frances
   ## Forbidden (HTTP 403).
 
 oa_shp <- s3read_using(st_read # Which function are we using to read
-                        , object = 'Output_Areas__December_2011__Boundaries_EW_BFC.shp' # File to open
-                        , bucket = buck) # Bucket name defined above
-
+                        , object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/OA_shapefile_data/Output_Areas__December_2011__Boundaries_EW_BFC.shp') # File to open
+                      
+                       
 # original command in ODE
 oa_shp <- st_read(here("data", "OA_shapefile_data", "Output_Areas__December_2011__Boundaries_EW_BFC.shp"))
 
