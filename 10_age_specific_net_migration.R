@@ -77,12 +77,21 @@ age_dta_clean<-age_dta %>%
   mutate(under_34_outmig=sum(c_across(contains(paste0("all_persons_age_age_", under_34,"_migration_", "outflow_total_measures")))),
          x35_to_64_outmig=sum(c_across(contains(paste0("all_persons_age_age_", x35_to_64,"_migration_", "outflow_total_measures")))),
          x65plus_outmig=sum(c_across(contains(paste0("all_persons_age_age_", x65plus,"_migration_", "outflow_total_measures"))))) %>% 
-  mutate(under_34_usualres=sum(c_across(c("under_34_samead","under_34_inmig"))),
-         x35_to_64_usualres=sum(c_across(c("x35_to_64_samead","x35_to_64_inmig"))),
-         x65plus_usualres=sum(c_across(c("x65plus_samead","x65plus_inmig")))) %>% 
+  mutate(under_34_usualres11=sum(c_across(c("under_34_samead","n_movedwithin", "n_inmig"))),
+         x35_to_64_usualres11=sum(c_across(c("x35_to_64_samead",""))),
+         x65plus_usualres11=sum(c_across(c("x65plus_samead","")))) %>% 
   select(c("date", "geography", "geography_code",contains(c("under_34","x35_to_64","x65plus"))))
 
+
+
+#n_movedwithin= within_same_area
+#n_usualres10= n_movedwithin+ n_samead+ n_outmig 
+#mid_yearpop= (n_usualres10+n_usualres11)/2
+
 #work out net migration 
+#net_migration= (n_inmig-n_outmig)/(mid_yearpop)*1000
+
+
 age_dta_clean<-age_dta_clean %>% 
   mutate(under_34_netmigration=(under_34_inmig-under_34_outmig)/(under_34_usualres+under_34_outmig-under_34_inmig)*1000,
          x35_to_64_netmigration=(x35_to_64_inmig-x35_to_64_outmig)/(x35_to_64_usualres+x35_to_64_outmig-x35_to_64_inmig)*1000,
