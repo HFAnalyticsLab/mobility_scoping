@@ -108,12 +108,27 @@ names(eng_dta)<-str_replace_all(names(eng_dta), c(" " = "." , "," = "" , ";" = "
 # names(eng_dta)[4:10]<-c('n_usualres','n_samead', 'n_totalmig','n_migwithin','n_miguk','n_migfor','n_outmig')
 
 eng_dta <- rename(eng_dta, n_samead = Migrationethnic.group.Lived.at.same.address.one.year.ago.measures.Value)
-eng_dta <- rename(eng_dta, n_usualres = Migrationethnic.group.All.usual.residents.measures.Value)
-eng_dta <- rename(eng_dta, n_totalmig = Migrationethnic.group.Migrants.Total.measures.Value)
-eng_dta <- rename(eng_dta, n_migwithin = Migrationethnic.group.Migrants.Moved.within.the.area.measures.Value)
-eng_dta <- rename(eng_dta, n_miguk = Migrationethnic.group.Migrants.Moved.into.the.area.from.within.the.UK.measures.Value)
-eng_dta <- rename(eng_dta, n_migfor = Migrationethnic.group.Migrants.Moved.into.the.area.from.outside.the.UK.measures.Value)
+eng_dta <- rename(eng_dta, n_usualres11 = Migrationethnic.group.All.usual.residents.measures.Value)
+# not relevant - remove eng_dta <- rename(eng_dta, n_totalmig = Migrationethnic.group.Migrants.Total.measures.Value)
+eng_dta <- rename(eng_dta, n_movedwithin = Migrationethnic.group.Migrants.Moved.within.the.area.measures.Value)
+eng_dta <- rename(eng_dta, n_inmiguk = Migrationethnic.group.Migrants.Moved.into.the.area.from.within.the.UK.measures.Value)
+eng_dta <- rename(eng_dta, n_inmigfor = Migrationethnic.group.Migrants.Moved.into.the.area.from.outside.the.UK.measures.Value)
 eng_dta <- rename(eng_dta, n_outmig = Migrationethnic.group.Moved.out.of.the.area.measures.Value)
+
+# usual residents one year before census
+eng_dta <- eng_dta %>%
+  mutate(n_usualres10 = n_samead + n_outmig + n_movedwithin)
+
+# usual residents - midyear
+eng_dta <- eng_dta %>% 
+  mutate(midyrpop = (n_usualres10 + n_usualres11)/2)
+
+# total inmigrants
+eng_dta <- eng_dta %>%
+  mutate(n_inmig = n_inmiguk + n_inmigfor)
+
+# recalculate net migration below as (n_inmig - n_outmig) / midyrpop
+
 
 
 #drop columns don't need
@@ -191,7 +206,11 @@ sum(eng_dta$net_migration <= -5) #1381
 
 # Calculate turnover as % of current residents who lived outside the area one year ago
   # this includes people moving in from elsewhere in UK and abroad (but not within the area)
-  # Brown et al. exclude people who'd moved from abroad in one of their papers, do we want to do the same? 
+  # Brown et al. exclude people who'd moved from abroad in one of their papers, do we want to do the same?
+  
+#NO - KEEP INTERNATIONAL INMIGRANTS IN TURNOVER CALCULATION
+ # add outmigrants 
+  # calculating turnover not churn (churn would including migration within )
 
 eng_dta <- eng_dta %>% 
   mutate(turnover = (n_miguk + n_migfor)/n_usualres*100)
