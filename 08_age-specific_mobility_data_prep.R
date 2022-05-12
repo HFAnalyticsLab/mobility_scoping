@@ -53,6 +53,8 @@ names(age_dta)[94:100]<-c('n_samead_75p', 'x_75p' , 'n_totalmig_75p','n_migwithi
 
 
 # Create variables for mean age of those living in area a year ago, inmigrants and outmigrants
+  # do samead + within in first category
+
 age_dta <- age_dta %>%
   mutate(meanage_samead = (n_samead_0_4*2.5 + n_samead_5_15*10.5 + n_samead_16_19*18 + n_samead_20_24*22.5 + n_samead_25_34*30 + n_samead_35_49*42.5 + n_samead_50_64*57.5 + n_samead_65_74*70 + n_samead_75p*85)/ n_samead)
 
