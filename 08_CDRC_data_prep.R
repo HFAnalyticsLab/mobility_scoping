@@ -45,7 +45,16 @@ cdrc_lsoa<-s3read_using(read_csv # Which function are we using to read
 summary(cdrc_lsoa)
 
 
+#drop 2020 (no data) and only include LSOA code (more LSOA code than in CDRC data) 
+
+cdrc_lsoa_clean<-cdrc_lsoa %>% 
+select(-chn2020) %>% 
+  filter(., grepl("E010", area))
 
 
+#join dfs 
 
+lsoa_shp <- left_join(lsoa_shp, cdrc_lsoa_clean, by = c("LSOA11CD" = "area"))
+
+summary(lsoa_shp)
 
