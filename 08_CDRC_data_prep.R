@@ -84,7 +84,7 @@ buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Frances
 
 map9_1 <- tm_shape(lsoa_shp) +
   tm_borders(,alpha=0) +
-  tm_fill(col = "chn2011", palette = "viridis", title = "Churn index 2011") +
+  tm_fill(col = "chn2011", style="cont", palette = "viridis", title = "Churn index 2011") +
   tm_layout(legend.title.size = 0.8,
             legend.text.size = 0.6,
             legend.position = c("left","top"),
@@ -94,6 +94,31 @@ map9_1 <- tm_shape(lsoa_shp) +
 #   tm_text(text="MSOA11NM")
 
 map9_1
+
+
+# Make maps for selected metro areas - London
+lsoa_shp %>% 
+  filter(substring(LSOA11CD, 2) < '01004681' & str_detect(LSOA11CD, 'E')) %>%
+  tabyl(LSOA11NM)
+
+
+ldn_lsoa_shp <- lsoa_shp %>% 
+  dplyr::filter(, substring(LSOA11CD, 2) < '01004681' & str_detect(LSOA11CD, 'E')) 
+
+
+
+# Map 4 - map of mobility categories - London
+map4 <- tm_shape(ldn_lsoa_shp) +
+  tm_borders(, alpha=0) +
+  tm_fill(col = "chn2011", style = "cont", palette = pal_THF, title = "Churn Index 2011") +
+  tm_borders(lwd = 0)  +
+  tm_layout(legend.title.size = 1,
+            legend.text.size = 0.6,
+            legend.position = c("right","top"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+map4
+
 
 
 
