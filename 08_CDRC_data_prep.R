@@ -9,7 +9,6 @@ put_object(
 )
 
 
-
 #Load LSOA shape file 
 
 # Option 2: trying command above with save_object to save directly into R workspace without manually downloading
@@ -33,6 +32,7 @@ save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mr
 lsoa_shp <- st_read(here::here("shapefiles", "eng.shp"))
 
 str(lsoa_shp)
+
 
 
 
