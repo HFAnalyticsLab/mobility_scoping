@@ -70,6 +70,15 @@ select(-chn2020) %>%
 lsoa_shp <- left_join(lsoa_shp, cdrc_lsoa_clean, by = c("LSOA11CD" = "area"))
 
 summary(lsoa_shp)
+#Save dataset 
+
+buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
+
+s3write_using(lsoa_shp # What R object we are saving
+              , FUN = write_rds # Which R function we are using to save
+              , object = 'lsoa_cdrc.RDS' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above
+
 
 
 # Prepare THF colour scheme
@@ -96,28 +105,56 @@ map9_1 <- tm_shape(lsoa_shp) +
 map9_1
 
 
+
+par(mfrow=c(2,2))
+
+loop.vector<-11:33
+vars<-list()
+lsoa_shp_cdrc<-lsoa_shp[,11:33]
+
+for (j in seq_along(loop.vector)) {
+  vars[[j]]<-as.name(colnames(lsoa_shp_cdrc)[j])
+}
+
+
+map_churn<- function(data=lsoa_shp,var=col) {
+tm_shape(data) +
+    tm_borders(,alpha=0) +
+    tm_fill(col = var, style="cont", palette = "viridis", title = paste0("Churn index", substr(var,4,7))) +
+    tm_layout(legend.title.size = 0.8,
+              legend.text.size = 0.6,
+              legend.position = c("left","top"),
+              legend.bg.color = "white",
+              legend.bg.alpha = 1) 
+
+}
+
+g<-lapply(as.character(vars[1:length(vars)]),map_churn,data=lsoa_shp)
+
+
 # Make maps for selected metro areas - London
 lsoa_shp %>% 
   filter(substring(LSOA11CD, 2) < '01004681' & str_detect(LSOA11CD, 'E')) %>%
   tabyl(LSOA11NM)
 
 
-ldn_lsoa_shp <- lsoa_shp %>% 
-  dplyr::filter(, substring(LSOA11CD, 2) < '01004681' & str_detect(LSOA11CD, 'E')) 
+# ldn_lsoa_shp <- lsoa_shp %>% 
+#   dplyr::filter(, substring(LSOA11CD, 2) < '01004681' & str_detect(LSOA11CD, 'E')) 
+# 
+# 
+# 
+# # Map 4 - map of mobility categories - London
+# map4 <- tm_shape(ldn_lsoa_shp) +
+#   tm_borders(, alpha=0) +
+#   tm_fill(col = "chn2011", style = "cont", palette = pal_THF, title = "Churn Index 2011") +
+#   tm_borders(lwd = 0)  +
+#   tm_layout(legend.title.size = 1,
+#             legend.text.size = 0.6,
+#             legend.position = c("right","top"),
+#             legend.bg.color = "white",
+#             legend.bg.alpha = 1)
+# map4
 
-
-
-# Map 4 - map of mobility categories - London
-map4 <- tm_shape(ldn_lsoa_shp) +
-  tm_borders(, alpha=0) +
-  tm_fill(col = "chn2011", style = "cont", palette = pal_THF, title = "Churn Index 2011") +
-  tm_borders(lwd = 0)  +
-  tm_layout(legend.title.size = 1,
-            legend.text.size = 0.6,
-            legend.position = c("right","top"),
-            legend.bg.color = "white",
-            legend.bg.alpha = 1)
-map4
 
 
 
