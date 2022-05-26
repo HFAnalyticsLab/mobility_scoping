@@ -1,5 +1,9 @@
 ## Mapping Levelling Up priority areas
 
+
+# clear R environment
+rm(list = ls())
+
 # Load packages
 pacman::p_load(haven, 
                dplyr, 
@@ -16,7 +20,12 @@ pacman::p_load(haven,
                here)
 
 # Import data
-levup <- import(here("data", "Levelling_Up_priority_areas", "Levelling_Up_Fund_list_of_local_authorities_by_priority_category.xlsx"))
+buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping' ## my bucket name
+
+levup <-s3read_using(import # Which function are we using to read
+                      , object = 'data/Levelling_Up_priority_areas/Levelling_Up_Fund_list_of_local_authorities_by_priority_category.xlsx' # File to open
+                      , bucket = buck) # Bucket name defined above
+
 
 dim(levup)
   # 368 LAs in file
@@ -24,7 +33,7 @@ dim(levup)
 # tidy column names
 names(levup)<-str_replace_all(names(levup), c(" " = "." ))
 
-tabyl(levup$Priority.category)
+tabyl(levup$Priority.category, show_missing_levels = T)
 
 
 # replace name for Rhondda so it merges correctly
@@ -38,8 +47,22 @@ pacman::p_load(sf,
                tmap,
                THFstyle)
 
-# read OA boundaries
-lad_shp21 <- st_read(here("data", "LAD_shapefile_data", "LAD_MAY_2021_UK_BFE_V2.shp"))
+# read LAD boundaries from 2021 (to match Levelling Up boundaries)
+# import shp data
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/LAD_MAY_2021_UK_BFE_V2.shp',
+            file = here::here("shapefiles", "eng.shp"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/LAD_MAY_2021_UK_BFE_V2.cpg',
+            file = here::here("shapefiles", "eng.cpg"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/LAD_MAY_2021_UK_BFE_V2.dbf',
+            file = here::here("shapefiles", "eng.dbf"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/LAD_MAY_2021_UK_BFE_V2.prj',
+            file = here::here("shapefiles", "eng.prj"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/LAD_MAY_2021_UK_BFE_V2.shx',
+            file = here::here("shapefiles", "eng.shx"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(May_2021)_UK_BFE_V3.xml',
+            file = here::here("shapefiles", "eng.xml"))
+
+lad_shp21 <- st_read(here::here("shapefiles", "eng.shp"))
 
 str(lad_shp21)
   #374 LAs
@@ -89,8 +112,8 @@ grDevices::palette(pal_THF_cont)
 
 
 
-# Map 5 - map of Levelling Up priority areas
-map5 <- tm_shape(lad_shp21) +
+# Map 6_1 - map of Levelling Up priority areas
+map6_1 <- tm_shape(lad_shp21) +
   tm_borders(, alpha=0) +
   tm_fill(col = "Priority.category", style = "cat", palette = pal_THF_cont, title = "Levelling Up priority category") +
   tm_layout(legend.title.size = 1,
@@ -98,8 +121,11 @@ map5 <- tm_shape(lad_shp21) +
             legend.position = c("right","top"),
             legend.bg.color = "white",
             legend.bg.alpha = 1)
-map5
-tmap_save(map5, here("outputs", "map5_LevUp_priorityareas.tiff"))
+map6_1
+s3write_using(map6_1 # What R object we are saving
+              , FUN = tmap_save # Which R function we are using to save
+              , object = 'outputs/map6_1_LevUp_priorityareas.tiff' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
 
 
 
@@ -110,8 +136,8 @@ ldn_lad_shp21 <- lad_shp21 %>%
 
 
 
-# Map 4 - map of mobility categories - London
-map5b <- tm_shape(ldn_lad_shp21) +
+# Map 6_2 - map of mobility categories - London
+map6_2 <- tm_shape(ldn_lad_shp21) +
   tm_borders(lwd=0) +
   tm_fill(col = "Priority.category", style = "cat", palette = pal_THF_cont, title = "Levelling Up priority category") +
   tm_layout(legend.title.size = 1,
@@ -119,6 +145,9 @@ map5b <- tm_shape(ldn_lad_shp21) +
             legend.position = c("right","top"),
             legend.bg.color = "white",
             legend.bg.alpha = 1)
-map5b
-tmap_save(map5b, here("outputs", "map4_LevUp_priorityareas_London.tiff"))
+map6_2
+s3write_using(map6_2 # What R object we are saving
+              , FUN = tmap_save # Which R function we are using to save
+              , object = 'outputs/map6_2_LevUp_priorityareas_London.tiff' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
 
