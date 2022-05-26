@@ -40,14 +40,13 @@ names(eng_dta)<-str_replace_all(names(eng_dta), c(" " = "." , "," = "" , ";" = "
 #   clean_names() %>% 
 #   select(1:10) 
 
-names(eng_dta)[4:10]<-c('n_usualres','n_samead', 'n_totalmig','n_migwithin','n_miguk','n_migfor','n_outmig')
+ # names(eng_dta)[4:10]<-c('n_usualres11','n_samead', 'n_totalmig','n_migwithin','n_inmiguk','n_inmigfor','n_outmig')
 
 eng_dta <- rename(eng_dta, n_samead = Migrationethnic.group.Lived.at.same.address.one.year.ago.measures.Value)
-eng_dta <- rename(eng_dta, n_usualres = Migrationethnic.group.All.usual.residents.measures.Value)
-eng_dta <- rename(eng_dta, n_totalmig = Migrationethnic.group.Migrants.Total.measures.Value)
-eng_dta <- rename(eng_dta, n_migwithin = Migrationethnic.group.Migrants.Moved.within.the.area.measures.Value)
-eng_dta <- rename(eng_dta, n_miguk = Migrationethnic.group.Migrants.Moved.into.the.area.from.within.the.UK.measures.Value)
-eng_dta <- rename(eng_dta, n_migfor = Migrationethnic.group.Migrants.Moved.into.the.area.from.outside.the.UK.measures.Value)
+eng_dta <- rename(eng_dta, n_usualres11 = Migrationethnic.group.All.usual.residents.measures.Value)
+eng_dta <- rename(eng_dta, n_movedwithin = Migrationethnic.group.Migrants.Moved.within.the.area.measures.Value)
+eng_dta <- rename(eng_dta, n_inmiguk = Migrationethnic.group.Migrants.Moved.into.the.area.from.within.the.UK.measures.Value)
+eng_dta <- rename(eng_dta, n_inmigfor = Migrationethnic.group.Migrants.Moved.into.the.area.from.outside.the.UK.measures.Value)
 eng_dta <- rename(eng_dta, n_outmig = Migrationethnic.group.Moved.out.of.the.area.measures.Value)
 
 
@@ -55,14 +54,26 @@ eng_dta <- rename(eng_dta, n_outmig = Migrationethnic.group.Moved.out.of.the.are
 eng_dta <- eng_dta %>% 
   dplyr::select(1:10) 
 
+# usual residents one year before census
+eng_dta <- eng_dta %>%
+  mutate(n_usualres10 = n_samead + n_outmig + n_movedwithin)
+
+# usual residents - midyear
+eng_dta <- eng_dta %>% 
+  mutate(midyrpop = (n_usualres10 + n_usualres11)/2)
+
+# total inmigrants
+eng_dta <- eng_dta %>%
+  mutate(n_inmig = n_inmiguk + n_inmigfor)
+
 
 # Describe size of MSOAs
-summary(eng_dta$n_usualres)
+summary(eng_dta$n_usualres11)
   # median = 7616 residents, max = 16342
 
 # calculate proportion of current residents who lived at the same address one year ago
 eng_dta <- eng_dta %>% 
-  mutate(prop_samead_1y = as.numeric(n_samead/n_usualres*100))
+  mutate(prop_samead_1y = as.numeric(n_samead/n_usualres11*100))
 summary(eng_dta$prop_samead_1y)
   # median = 90% of people in MSOA lived at same address a year ago
 
@@ -80,60 +91,58 @@ eng_dta$net_outmig <- ifelse(eng_dta$n_outmig > eng_dta$n_totalmig, 1, 0)
 # Recreate Brown 2010 classification
 # Identify areas of 10% + net increase (using previous year's residents as denominator)
 eng_dta <- eng_dta %>% 
-  mutate(net_migration = (n_totalmig - n_outmig)/(n_usualres + n_outmig - n_totalmig)*100)
+  mutate(net_migration = (n_inmig - n_outmig)/(midyrpop)*100)
 summary(eng_dta$net_migration)  
-  #median net migration = 2.1%
+#median net migration = 0.44%
 
 sum(eng_dta$net_migration <= -10) #1
-sum(eng_dta$net_migration >= 10) #254
+sum(eng_dta$net_migration >= 10) #106
   #small numbers of MSOAs
 
-sum(eng_dta$net_migration <= -5) #3
-3/7201 #0.04% 
+sum(eng_dta$net_migration <= -5) #9
+9/7201 #0.12% 
 
-sum(eng_dta$net_migration <= -1) #83
-83/7201 #1.1% 
+sum(eng_dta$net_migration <= -1) #593
+593/7201 #8.2% 
 
-sum(eng_dta$net_migration <= -0.5) #198
-198/7201 #2.7% 
-
-sum(eng_dta$net_migration <= -0) #510
-510/7201 #7.1% 
   # need to use different cut-off for declining areas for this area size
 
-sum(eng_dta$net_migration >5) #989
-989/7201 #13.7% MSOAs with >5% population growth in one year
+sum(eng_dta$net_migration >5) #399
+399/7201 #5.5% MSOAs with >5% population growth in one year
 
 
 
-# Calculate turnover as % of current residents who lived outside the area one year ago
-  # this includes people moving in from elsewhere in UK and abroad (but not within the area)
-  # Brown et al. exclude people who'd moved from abroad in one of their papers, do we want to do the same? 
+# Calculate turnover as total inmigrants + outmigrants divided by current residents
+# this includes people moving in from elsewhere in UK and abroad (but not within the area)
+# (churn would additionally include migration within)
+# Brown et al. exclude people who'd moved from abroad in one of their papers, do we want to do the same?
+
 
 eng_dta <- eng_dta %>% 
-  mutate(turnover = (n_miguk + n_migfor)/n_usualres*100)
+  mutate(turnover = (n_inmig + n_outmig)/n_usualres11*100)
 summary(eng_dta$turnover)
-#median turnover = 8.3% 
+#median turnover = 16.3%
 
 
 # Create variable with mobility categories
 eng_dta <- eng_dta %>%
   mutate(mob_cat = case_when(
-    net_migration <= 0 ~ "Decreasing",
+    net_migration <= -1 ~ "Decreasing <-1%",
     net_migration > 5 ~ "Increasing >5%",
-    net_migration > 0 & net_migration <= 5 & turnover >= 8.3 ~ "Stable, high turnover",
-    net_migration > -5 & net_migration <= 5 & turnover <8.3 ~ "Stable, low turnover"
+    net_migration > -1 & net_migration <= 5 & turnover >= 16.3 ~ "Stable, high turnover",
+    net_migration > -1 & net_migration <= 5 & turnover <16.3 ~ "Stable, low turnover"
   ))
 
-tabyl(eng_dta$mob_cat)
-# Stable, low turnover accounts for 42% of all MSOAs in England for period 2010-11
+tabyl(eng_dta$mob_cat, show_missing_levels = T)
+# Stable, low turnover accounts for 44% of all MSOAs in England for period 2010-11
+sum(is.na(eng_dta$mob_cat))
 
 #Save dataset 
 
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
+buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping' ## my bucket name
 
 s3write_using(eng_dta # What R object we are saving
               , FUN = write_rds # Which R function we are using to save
-              , object = 'eng_dta_MSOA.RDS' # Name of the file to save to (include file type)
+              , object = 'data/clean/eng_dta_MSOA.RDS' # Name of the file to save to (include file type)
               , bucket = buck) # Bucket name defined above
 

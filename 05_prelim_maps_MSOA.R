@@ -38,10 +38,10 @@ str(msoa_shp)
 
 
 #load mobility MSOA data
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
+buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping' ## my bucket name
 
 eng_dta<-s3read_using(readRDS # Which function are we using to read
-             , object = 'eng_dta_MSOA.RDS' # File to open
+             , object = 'data/clean/eng_dta_MSOA.RDS' # File to open
              , bucket = buck) # Bucket name defined above
 
 
@@ -73,8 +73,8 @@ grDevices::palette(pal_THF)
 # not sure what the palette command does
 
 
-# Map 3 - map of mobility categories - without simplified boundaries
-map3 <- tm_shape(msoa_shp) +
+# Map 1 - map of mobility categories - without simplified boundaries
+map5_1 <- tm_shape(msoa_shp) +
   tm_borders(, alpha=0) +
   tm_fill(col = "mob_cat", style = "cat", palette = pal_THF, title = "Mobility category") +
   tm_borders(lwd = 0)  +
@@ -83,9 +83,11 @@ map3 <- tm_shape(msoa_shp) +
             legend.position = c("right","top"),
             legend.bg.color = "white",
             legend.bg.alpha = 1)
-map3
-tmap_save(map3, here("outputs", "map3_mobility_MSOAs.tiff"))
-  # Note: need to figure out how to export maps with sw3 commands
+map5_1
+s3write_using(map5_1 # What R object we are saving
+              , FUN = tmap_save # Which R function we are using to save
+              , object = 'outputs/map5_1_mobility_MSOA.tiff' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
   # + scale_fill_manual to set category colours manually
 
 
@@ -99,8 +101,8 @@ ldn_msoa_shp <- msoa_shp %>%
 
 
 
-# Map 4 - map of mobility categories - London
-map4 <- tm_shape(ldn_msoa_shp) +
+# Map 2 - map of mobility categories - London
+map5_2 <- tm_shape(ldn_msoa_shp) +
   tm_borders(, alpha=0) +
   tm_fill(col = "mob_cat", style = "cat", palette = pal_THF, title = "Mobility category") +
   tm_borders(lwd = 0)  +
@@ -109,8 +111,11 @@ map4 <- tm_shape(ldn_msoa_shp) +
             legend.position = c("right","top"),
             legend.bg.color = "white",
             legend.bg.alpha = 1)
-map4
-tmap_save(map4, here("outputs", "map4_mobility_MSOAs_London.tiff"))
+map5_2
+s3write_using(map5_2 # What R object we are saving
+              , FUN = tmap_save # Which R function we are using to save
+              , object = 'outputs/map5_2_mobility_MSOA.tiff' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
 
 
 

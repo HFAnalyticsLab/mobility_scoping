@@ -103,10 +103,11 @@ eng_dta <- eng_dta %>%
     net_migration <= -2 ~ "Decreasing <-2%",
     net_migration > 5 ~ "Increasing >5%",
     net_migration > -2 & net_migration <= 5 & turnover >= 19 ~ "Stable, high turnover",
-    net_migration > -5 & net_migration <= 5 & turnover <19 ~ "Stable, low turnover"
+    net_migration > -2 & net_migration <= 5 & turnover <19 ~ "Stable, low turnover"
   ))
 
 tabyl(eng_dta$mob_cat)
+sum(is.na(eng_dta$mob_cat))
 
 
 
@@ -154,7 +155,7 @@ grDevices::palette(pal_THF)
 
 
 # Map 3 - map of mobility categories 
-map3_3 <- tm_shape(lsoa_shp) +
+map3_1 <- tm_shape(lsoa_shp) +
   tm_borders(, alpha=0) +
   tm_fill(col = "mob_cat", style = "cat", palette = pal_THF, title = "Mobility category") +
   tm_borders(lwd = 0)  +
@@ -163,10 +164,10 @@ map3_3 <- tm_shape(lsoa_shp) +
             legend.position = c("right","top"),
             legend.bg.color = "white",
             legend.bg.alpha = 1)
-map3_3
-s3write_using(map3_3 # What R object we are saving
+map3_1
+s3write_using(map3_1 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
-              , object = 'outputs/map3_3_mobility_LSOA.tiff' # Name of the file to save to (include file type)
+              , object = 'outputs/map3_1_mobility_LSOA.tiff' # Name of the file to save to (include file type)
               , bucket = buck) # Bucket name defined above
 
 
@@ -182,8 +183,8 @@ ldn_lsoa_shp <- lsoa_shp %>%
 
 
 
-# Map 4 - map of mobility categories - London
-map3_4 <- tm_shape(ldn_lsoa_shp) +
+# Map 2 - map of mobility categories - London
+map3_2 <- tm_shape(ldn_lsoa_shp) +
   tm_borders(, alpha=0) +
   tm_fill(col = "mob_cat", style = "cat", palette = pal_THF, title = "Mobility category") +
   tm_borders(lwd = 0)  +
@@ -192,10 +193,10 @@ map3_4 <- tm_shape(ldn_lsoa_shp) +
             legend.position = c("right","top"),
             legend.bg.color = "white",
             legend.bg.alpha = 1)
-map3_4
-s3write_using(map3_4 # What R object we are saving
+map3_2
+s3write_using(map3_2 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
-              , object = 'outputs/map3_4_mobility_London.tiff' # Name of the file to save to (include file type)
+              , object = 'outputs/map3_2_mobility_London.tiff' # Name of the file to save to (include file type)
               , bucket = buck) # Bucket name defined above
 
 
