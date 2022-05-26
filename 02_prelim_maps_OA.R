@@ -53,7 +53,7 @@ str(oa_shp)
 
 
 
-# Join spatial data
+# Join spatial data with eng_dta (created in script 1)
 eng_dta <- s3read_using(import # Which function are we using to read
                         , object = 'data/clean/eng_dta_OA.RDS' # File to open
                         , bucket = buck) # Bucket name defined above
