@@ -117,7 +117,6 @@ sum(eng_dta$net_migration >5) #399
 # (churn would additionally include migration within)
 # Brown et al. exclude people who'd moved from abroad in one of their papers, do we want to do the same?
 
-
 eng_dta <- eng_dta %>% 
   mutate(turnover = (n_inmig + n_outmig)/n_usualres11*100)
 summary(eng_dta$turnover)
