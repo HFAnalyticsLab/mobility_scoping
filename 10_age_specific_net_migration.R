@@ -65,7 +65,7 @@ x35_to_64<-c("35_to_49","50_to_64")
 x65plus<-c("65_to_64","75_and_over")
 
 age_dta_clean<-age_dta %>% 
-  select(c("date", "geography", "geography_code", contains(c("same_address", "inflow_total_measures","outflow_total_measures")))) %>% 
+  select(c("date", "geography", "geography_code", contains(c("same_address", "inflow_total_measures","outflow_total_measures", "within_same_area_measures")))) %>% 
   # select(contains(c("inflow_total_measures"))) %>%
   rowwise() %>% 
   mutate(under_34_samead=sum(c_across(contains(paste0("all_persons_age_age_", under_34,"_migration_", "lived_at_same_address")))),
@@ -74,12 +74,21 @@ age_dta_clean<-age_dta %>%
   mutate(under_34_inmig=sum(c_across(contains(paste0("all_persons_age_age_", under_34,"_migration_", "inflow_total_measures")))),
          x35_to_64_inmig=sum(c_across(contains(paste0("all_persons_age_age_", x35_to_64,"_migration_", "inflow_total_measures")))),
          x65plus_inmig=sum(c_across(contains(paste0("all_persons_age_age_", x65plus,"_migration_", "inflow_total_measures"))))) %>% 
+  mutate(under_34_n_movedwithin=sum(c_across(contains(paste0("all_persons_age_age_", under_34,"_migration_", "within_same_area_measures")))),
+         x35_to_64_n_movedwithin=sum(c_across(contains(paste0("all_persons_age_age_", x35_to_64,"_migration_", "within_same_area_measures")))),
+         x65plus_n_movedwithin=sum(c_across(contains(paste0("all_persons_age_age_", x65plus,"_migration_", "within_same_area_measures"))))) %>%
   mutate(under_34_outmig=sum(c_across(contains(paste0("all_persons_age_age_", under_34,"_migration_", "outflow_total_measures")))),
          x35_to_64_outmig=sum(c_across(contains(paste0("all_persons_age_age_", x35_to_64,"_migration_", "outflow_total_measures")))),
          x65plus_outmig=sum(c_across(contains(paste0("all_persons_age_age_", x65plus,"_migration_", "outflow_total_measures"))))) %>% 
-  mutate(under_34_usualres11=sum(c_across(c("under_34_samead","n_movedwithin", "n_inmig"))),
-         x35_to_64_usualres11=sum(c_across(c("x35_to_64_samead",""))),
-         x65plus_usualres11=sum(c_across(c("x65plus_samead","")))) %>% 
+  mutate(under_34_usualres11=sum(c_across(c("under_34_samead","under_34_n_movedwithin", "under_34_inmig"))),
+         x35_to_64_usualres11=sum(c_across(c("x35_to_64_samead","x35_to_64_n_movedwithin", "x35_to_64_inmig"))),
+         x65plus_usualres11=sum(c_across(c("x65plus_samead","x65plus_n_movedwithin", "x65plus_inmig")))) %>% 
+  mutate(under_34_usualres10=sum(c_across(c("under_34_samead","under_34_n_movedwithin", "under_34_outmig"))),
+         x35_to_64_usualres10=sum(c_across(c("x35_to_64_samead","x35_to_64_n_movedwithin", "x35_to_64_outmig"))),
+         x65plus_usualres10=sum(c_across(c("x65plus_samead","x65plus_n_movedwithin", "x65plus_outmig")))) %>% 
+  mutate(under_34_midyearpop=sum((under_34_usualres10+under_34_usualres11)/2),
+         x35_to_64_midyearpop=sum((x35_to_64_usualres10+x35_to_64_usualres11)/2),
+         x65plus_midyearpop=sum((x65plus_usualres10+x65plus_usualres11)/2)) %>% 
   select(c("date", "geography", "geography_code",contains(c("under_34","x35_to_64","x65plus"))))
 
 
@@ -93,9 +102,9 @@ age_dta_clean<-age_dta %>%
 
 
 age_dta_clean<-age_dta_clean %>% 
-  mutate(under_34_netmigration=(under_34_inmig-under_34_outmig)/(under_34_usualres+under_34_outmig-under_34_inmig)*1000,
-         x35_to_64_netmigration=(x35_to_64_inmig-x35_to_64_outmig)/(x35_to_64_usualres+x35_to_64_outmig-x35_to_64_inmig)*1000,
-         x65plus_netmigration=(x65plus_inmig-x65plus_outmig)/(x65plus_usualres+x65plus_outmig-x65plus_inmig)*1000)
+  mutate(under_34_netmigration=(under_34_inmig-under_34_outmig)/(under_34_midyearpop)*1000,
+         x35_to_64_netmigration=(x35_to_64_inmig-x35_to_64_outmig)/(x35_to_64_midyearpop)*1000,
+         x65plus_netmigration=(x65plus_inmig-x65plus_outmig)/(x65plus_midyearpop)*1000)
 
 #label net migration 
 age_dta_clean<-age_dta_clean %>% 
@@ -132,7 +141,7 @@ grDevices::palette(pal_THF)
 
 
 # Map 9.1 - map of net migration rate by age
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
+buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/outputs' ## my bucket name
 
 
 map9_1 <- tm_shape(msoa_shp) +
@@ -179,7 +188,7 @@ map9
 
 s3write_using(map9 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
-              , object = 'map9.png' # Name of the file to save to (include file type)
+              , object = 'map9_newcalcs.png' # Name of the file to save to (include file type)
               , bucket = buck) # Bucket name defined above
 
 
@@ -239,7 +248,7 @@ map10
 
 s3write_using(map10 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
-              , object = 'map10.png' # Name of the file to save to (include file type)
+              , object = 'map10_newcalcs.png' # Name of the file to save to (include file type)
               , bucket = buck) # Bucket name defined above
 
 
