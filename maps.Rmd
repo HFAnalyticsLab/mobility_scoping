@@ -1,0 +1,344 @@
+---
+title: "CDRC maps"
+
+output:
+   html_document:
+    toc: true
+    toc_float: true
+    theme: paper
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+pacman::p_load(tidyverse,
+               sf,
+               XML,
+               tmap,
+               viridis, 
+               aws.s3,
+               rio,
+               janitor,
+               shiny)
+
+```
+               
+              
+
+```{r, include=FALSE}
+#Load data 
+buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
+
+lsoa_shp<-s3read_using(readRDS # Which function are we using to read
+                      , object = 'lsoa_cdrc.RDS' # File to open
+                      , bucket = buck) # Bucket name defined above
+
+```
+
+
+## Background {.tabset}
+
+This is an R markdown document to show the churn index from 1997-2020. 
+The data simply provides a ratio of the households that are different in each LSOA between the end of 2020 and the end of each year going back to 1997. 
+
+Residential mobility ("Population Churn") is estimated at the household level. Shows the proportion of change in households compared to 2020. 
+
+
+```{r, echo=FALSE}
+# Prepare THF colour scheme
+pal_THF <- c('#dd0031', '#53a9cd',  '#744284',  '#ffd412',   '#2a7979', '#ee9b90', '#0c402b', '#a6d7d3', '#005078', '#f39214', '#2ca365')
+grDevices::palette(pal_THF)
+# not sure what the palette command does
+
+map_churn<- function(data=lsoa_shp,var=col) {
+tm_shape(data) +
+    tm_borders(,alpha=0) +
+    tm_fill(col = var, style="cont", palette = "viridis", title = paste0("Churn index", substr(var,4,7))) +
+    tm_layout(legend.title.size = 0.8,
+              legend.text.size = 0.6,
+              legend.position = c("left","top"),
+              legend.bg.color = "white",
+              legend.bg.alpha = 1) 
+
+}
+
+loop.vector<-11:33
+vars<-list()
+lsoa_shp_cdrc<-lsoa_shp[,11:33]
+
+for (j in seq_along(loop.vector)) {
+  vars[[j]]<-as.name(colnames(lsoa_shp_cdrc)[j])
+}
+
+g<-lapply(as.character(vars[1:length(vars)]),map_churn,data=lsoa_shp)
+
+
+```
+
+
+
+## Chrun index for England {.tabset .tabset-dropdown}
+
+### 1997
+```{r, echo=FALSE}
+g[[1]]
+```
+
+### 1998
+```{r, echo=FALSE}
+g[[2]]
+```
+
+### 1999
+```{r, echo=FALSE}
+g[[3]]
+```
+
+### 2000
+```{r, echo=FALSE}
+g[[4]]
+```
+
+### 2001
+```{r, echo=FALSE}
+g[[5]]
+```
+
+### 2002
+```{r, echo=FALSE}
+
+g[[6]]
+```
+
+### 2003
+```{r, echo=FALSE}
+g[[7]]
+```
+
+### 2004
+```{r, echo=FALSE}
+
+g[[8]]
+```
+
+### 2005
+```{r, echo=FALSE}
+
+g[[9]]
+```
+
+### 2006
+```{r, echo=FALSE}
+g[[10]]
+```
+
+### 2007
+```{r, echo=FALSE}
+g[[11]]
+```
+
+### 2008
+```{r, echo=FALSE}
+
+g[[12]]
+```
+
+### 2009
+```{r, echo=FALSE}
+
+g[[13]]
+```
+
+### 2010
+```{r, echo=FALSE}
+g[[14]]
+```
+
+### 2011
+```{r, echo=FALSE}
+g[[15]]
+```
+
+### 2012
+```{r, echo=FALSE}
+
+g[[16]]
+```
+
+### 2013
+```{r, echo=FALSE}
+g[[17]]
+```
+
+### 2014
+```{r, echo=FALSE}
+g[[18]]
+```
+
+### 2015
+```{r, echo=FALSE}
+g[[19]]
+```
+
+### 2016
+```{r, echo=FALSE}
+g[[20]]
+```
+
+### 2017
+```{r, echo=FALSE}
+g[[21]]
+```
+
+### 2018
+```{r, echo=FALSE}
+g[[22]]
+```
+
+### 2019
+```{r, echo=FALSE}
+g[[23]]
+```
+
+## Chrun index for London only {.tabset .tabset-dropdown}
+
+```{r, echo=FALSE}
+
+vars<-list()
+lsoa_shp_cdrc<-lsoa_shp[,11:33]
+
+for (j in seq_along(loop.vector)) {
+  vars[[j]]<-as.name(colnames(lsoa_shp_cdrc)[j])
+}
+
+ldn_lsoa_shp <- lsoa_shp %>%
+  dplyr::filter(, substring(LSOA11CD, 2) < '01004681' & str_detect(LSOA11CD, 'E'))
+
+l<-lapply(as.character(vars[1:length(vars)]),map_churn,data=ldn_lsoa_shp)
+
+
+
+
+```
+
+
+### 1997
+```{r, echo=FALSE}
+l[[1]]
+```
+
+### 1998
+```{r, echo=FALSE}
+l[[2]]
+```
+
+### 1999
+```{r, echo=FALSE}
+l[[3]]
+```
+
+### 2000
+```{r, echo=FALSE}
+l[[4]]
+```
+
+### 2001
+```{r, echo=FALSE}
+l[[5]]
+```
+
+### 2002
+```{r, echo=FALSE}
+
+l[[6]]
+```
+
+### 2003
+```{r, echo=FALSE}
+l[[7]]
+```
+
+### 2004
+```{r, echo=FALSE}
+
+l[[8]]
+```
+
+### 2005
+```{r, echo=FALSE}
+
+l[[9]]
+```
+
+### 2006
+```{r, echo=FALSE}
+l[[10]]
+```
+
+### 2007
+```{r, echo=FALSE}
+l[[11]]
+```
+
+### 2008
+```{r, echo=FALSE}
+
+l[[12]]
+```
+
+### 2009
+```{r, echo=FALSE}
+
+l[[13]]
+```
+
+### 2010
+```{r, echo=FALSE}
+l[[14]]
+```
+
+### 2011
+```{r, echo=FALSE}
+l[[15]]
+```
+
+### 2012
+```{r, echo=FALSE}
+
+l[[16]]
+```
+
+### 2013
+```{r, echo=FALSE}
+l[[17]]
+```
+
+### 2014
+```{r, echo=FALSE}
+l[[18]]
+```
+
+### 2015
+```{r, echo=FALSE}
+l[[19]]
+```
+
+### 2016
+```{r, echo=FALSE}
+l[[20]]
+```
+
+### 2017
+```{r, echo=FALSE}
+l[[21]]
+```
+
+### 2018
+```{r, echo=FALSE}
+l[[22]]
+```
+
+### 2019
+```{r, echo=FALSE}
+l[[23]]
+```
