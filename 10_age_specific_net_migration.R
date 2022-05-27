@@ -102,24 +102,48 @@ age_dta_clean<-age_dta %>%
 
 
 age_dta_clean<-age_dta_clean %>% 
-  mutate(under_34_netmigration=(under_34_inmig-under_34_outmig)/(under_34_midyearpop)*1000,
-         x35_to_64_netmigration=(x35_to_64_inmig-x35_to_64_outmig)/(x35_to_64_midyearpop)*1000,
-         x65plus_netmigration=(x65plus_inmig-x65plus_outmig)/(x65plus_midyearpop)*1000)
+  mutate(under_34_netmigration=(under_34_inmig-under_34_outmig)/(under_34_midyearpop)*100,
+         x35_to_64_netmigration=(x35_to_64_inmig-x35_to_64_outmig)/(x35_to_64_midyearpop)*100,
+         x65plus_netmigration=(x65plus_inmig-x65plus_outmig)/(x65plus_midyearpop)*100)
 
-#label net migration 
-age_dta_clean<-age_dta_clean %>% 
-  mutate(under_34_netmigration_lab=case_when(under_34_netmigration==0 ~ "0", 
-                                             under_34_netmigration<0 ~ "negative",
-                                             under_34_netmigration >0 ~ "positive"),
-         x35_to_64_netmigration_lab=case_when(x35_to_64_netmigration==0 ~ "0", 
-                                              x35_to_64_netmigration<0 ~ "negative",
-                                              x35_to_64_netmigration >0 ~ "positive"),
-         x65plus_netmigration_lab=case_when(x65plus_netmigration==0 ~ "0", 
-                                            x65plus_netmigration<0 ~ "negative",
-                                            x65plus_netmigration >0 ~ "positive"))
 
 age_dta_shp<-age_dta_clean %>% 
   select(c("date", "geography", "geography_code",contains(c("netmigration"))))
+
+#save data
+buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
+
+s3write_using(age_dta_shp # What R object we are saving
+              , FUN = write.csv # Which R function we are using to save
+              , object = 'age_net_migration.csv' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above
+
+
+summary(age_dta_shp)
+
+
+age_dta_shp_plot<-age_dta_shp %>% 
+  select(under_34_netmigration:x65plus_netmigration) %>% 
+  pivot_longer(everything(), names_to="age", values_to="net_migration")
+  
+t<-boxplot(net_migration~age,data=age_dta_shp_plot, main="Net Migration by Age",
+        xlab="Age", ylab="Net Migration")
+
+
+#label net migration 
+age_dta_shp<-age_dta_shp %>% 
+  mutate(under_34_netmigration_lab=case_when(under_34_netmigration < -1 ~ "Negative (greater than 1% of people leaving)",
+                                             under_34_netmigration > 1 ~ "Positive (greater than 1% of people moving in)", 
+                                             TRUE ~ "stable migration (~1% of population moving in and out)"),
+         x35_to_64_netmigration_lab=case_when(x35_to_64_netmigration < -1 ~ "Negative (greater than 1% of people leaving)",
+                                              x35_to_64_netmigration > 1 ~ "Positive (greater than 1% of people moving in)",
+                                              TRUE ~ "stable migration (~1% of population moving in and out)"),
+         x65plus_netmigration_lab=case_when(x65plus_netmigration < -1 ~ "Negative (greater than 1% of people leaving)",
+                                            x65plus_netmigration > 1 ~ "Positive (greater than 1% of people moving in)",
+                                            TRUE ~ "stable migration (~1% of population moving in and out)"))
+
+
+
 
 # Join spatial data
 msoa_shp <- left_join(msoa_shp, age_dta_shp, by = c("MSOA11CD" = "geography_code"))
@@ -188,7 +212,7 @@ map9
 
 s3write_using(map9 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
-              , object = 'map9_newcalcs.png' # Name of the file to save to (include file type)
+              , object = 'map9_newcats.png' # Name of the file to save to (include file type)
               , bucket = buck) # Bucket name defined above
 
 
@@ -248,7 +272,7 @@ map10
 
 s3write_using(map10 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
-              , object = 'map10_newcalcs.png' # Name of the file to save to (include file type)
+              , object = 'map10_newcats.png' # Name of the file to save to (include file type)
               , bucket = buck) # Bucket name defined above
 
 
