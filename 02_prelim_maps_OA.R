@@ -1,32 +1,63 @@
 ## Preliminary maps - Output Area level
 # Run this script after 01_mobility_data_prep
 
+# clear R environment
+rm(list = ls())
+
 # load packages
-install.packages('BiocManager')
-pacman::p_load(sf,
+library(aws.s3)
+pacman::p_load(haven, 
+               dplyr, 
+               survey, 
+               janitor,
+               questionr, 
+               epiDisplay, 
+               epirhandbook,
+               rio, 
+               ggplot2, 
+               apyramid,
+               magrittr, 
+               stringr, 
+               here,
+               readr, 
+               BiocManager,
+               sf,
                XML,
                tmap,
-               THFstyle)
+               THFstyle,
+               dplyr)
 
 # read OA boundaries
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp' ## my bucket name
+buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping' ## my bucket name
 
-# attempt to import shp data
-  ## command does not work
-  ## error message: Error in parse_aws_s3_response(r, Sig, verbose = verbose) : 
-  ## Forbidden (HTTP 403).
+# import shp data
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/OA_shapefile_data/Output_Areas__December_2011__Boundaries_EW_BFC.shp',
+            file = here::here("shapefiles", "eng.shp"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/OA_shapefile_data/Output_Areas__December_2011__Boundaries_EW_BFC.cpg',
+            file = here::here("shapefiles", "eng.cpg"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/OA_shapefile_data/Output_Areas__December_2011__Boundaries_EW_BFC.dbf',
+            file = here::here("shapefiles", "eng.dbf"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/OA_shapefile_data/Output_Areas__December_2011__Boundaries_EW_BFC.prj',
+            file = here::here("shapefiles", "eng.prj"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/OA_shapefile_data/Output_Areas__December_2011__Boundaries_EW_BFC.shx',
+            file = here::here("shapefiles", "eng.shx"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/OA_shapefile_data/Output_Areas__December_2011__Boundaries_EW_BFC.xml',
+            file = here::here("shapefiles", "eng.xml"))
 
-oa_shp <- s3read_using(st_read # Which function are we using to read
-                        , object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/OA_shapefile_data/Output_Areas__December_2011__Boundaries_EW_BFC.shp') # File to open
-                      
-                       
-# original command in ODE
-oa_shp <- st_read(here("data", "OA_shapefile_data", "Output_Areas__December_2011__Boundaries_EW_BFC.shp"))
 
+# load shp data
+oa_shp <- st_read(here::here("shapefiles", "eng.shp"))
 
 str(oa_shp)
 
-# Join spatial data
+
+
+
+# Join spatial data with eng_dta (created in script 1)
+eng_dta <- s3read_using(import # Which function are we using to read
+                        , object = 'data/clean/eng_dta_OA.RDS' # File to open
+                        , bucket = buck) # Bucket name defined above
+
 oa_shp <- left_join(oa_shp, eng_dta, by = c("OA11CD" = "geography"))
   # geography is the OA code in the eng_dta df and OA11CD the code in the shapefile data
   # This command merges the indicators onto the shapefile data
@@ -53,6 +84,9 @@ grDevices::palette(pal_THF)
   # not sure what the palette command does
 
 
+# These maps take ages to run, and are hard to read. 
+  # not spending more time on these in favour of LSOA/MSOA maps
+
 # Map 1 - Simple map of England and Wales
 tm_shape(oa_shp_simple) +
   tm_fill(col = "ctry_nm", style = "cat", palette = pal_THF, title = "Country") +
@@ -62,11 +96,11 @@ tm_shape(oa_shp_simple) +
             legend.position = c("right","top"),
             legend.bg.color = "white",
             legend.bg.alpha = 1)
-  # OA level doesn't produce the most readable maps - unless manage to remove boundaries between polygons entirely
+  # OA level doesn't produce the most readable maps even after removing boundaries
   # and takes much longer to produce OA level maps than LA level maps
 
 # remove polygon borders
-map1 <- tm_shape(oa_shp_simple) +
+map2_1 <- tm_shape(oa_shp_simple) +
   tm_borders(, alpha=0) +
   tm_fill(col = "ctry_nm", style = "cat", palette = pal_THF, title = "Country") +
   tm_borders(lwd = 0)  +
@@ -75,14 +109,13 @@ map1 <- tm_shape(oa_shp_simple) +
             legend.position = c("right","top"),
             legend.bg.color = "white",
             legend.bg.alpha = 1) 
-map1
+map2_1
   # seems to have removed borders but can't figure out what the white areas are 
 
-tmap_save(map1, here("outputs", "map1_EW_OAs.tiff"))
 
 
 # Map 2 - map of mobility categories
-map2 <- tm_shape(oa_shp_simple) +
+map2_2 <- tm_shape(oa_shp_simple) +
   tm_borders(, alpha=0) +
   tm_fill(col = "mob_cat", style = "cat", palette = pal_THF, title = "Mobility category") +
   tm_borders(lwd = 0)  +
@@ -91,11 +124,11 @@ map2 <- tm_shape(oa_shp_simple) +
             legend.position = c("right","top"),
             legend.bg.color = "white",
             legend.bg.alpha = 1)
-map2 
+map2_2 
 
 
 # Repeat Map 2 - map of mobility categories - without simplified boundaries
-map2 <- tm_shape(oa_shp) +
+map2_2 <- tm_shape(oa_shp) +
   tm_borders(, alpha=0) +
   tm_fill(col = "mob_cat", style = "cat", palette = pal_THF, title = "Mobility category") +
   tm_borders(lwd = 0)  +
@@ -104,9 +137,14 @@ map2 <- tm_shape(oa_shp) +
             legend.position = c("right","top"),
             legend.bg.color = "white",
             legend.bg.alpha = 1)
-map2 
-tmap_save(map2, here("outputs", "map2_mobility_OAs.tiff"))
+map2_2 
+s3write_using(map2_2 # What R object we are saving
+              , FUN = tmap_save # Which R function we are using to save
+              , object = 'outputs/map2_mobility_OAs.tiff' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above
+
 
   # should we remove Wales from the shp file? 
-  # need to figure out how to make maps for selected metro areas
+
+  # having trouble getting these to work on DAP, get write errors - not critical since we'll be working at lSOA/MSOA level
 

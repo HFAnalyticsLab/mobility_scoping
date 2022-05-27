@@ -39,7 +39,8 @@ pacman::p_load(haven,
                apyramid,
                magrittr, 
                stringr, 
-               here)
+               here,
+               readr)
 
 # set working directory (local/fixed pathway)
   #NOTE: obsolete since project sets wd and using "here"
@@ -109,7 +110,6 @@ names(eng_dta)<-str_replace_all(names(eng_dta), c(" " = "." , "," = "" , ";" = "
 
 eng_dta <- rename(eng_dta, n_samead = Migrationethnic.group.Lived.at.same.address.one.year.ago.measures.Value)
 eng_dta <- rename(eng_dta, n_usualres11 = Migrationethnic.group.All.usual.residents.measures.Value)
-# not relevant - remove eng_dta <- rename(eng_dta, n_totalmig = Migrationethnic.group.Migrants.Total.measures.Value)
 eng_dta <- rename(eng_dta, n_movedwithin = Migrationethnic.group.Migrants.Moved.within.the.area.measures.Value)
 eng_dta <- rename(eng_dta, n_inmiguk = Migrationethnic.group.Migrants.Moved.into.the.area.from.within.the.UK.measures.Value)
 eng_dta <- rename(eng_dta, n_inmigfor = Migrationethnic.group.Migrants.Moved.into.the.area.from.outside.the.UK.measures.Value)
@@ -133,7 +133,7 @@ eng_dta <- eng_dta %>%
 
 #drop columns don't need
 eng_dta <- eng_dta %>% 
-  dplyr::select(1:10) 
+  dplyr::select(1:3, contains(c("n_")), midyrpop) 
 
 #alternative code - ignore, done in command lines 50/51
 # p_load(data.table)
@@ -151,14 +151,14 @@ for (i in c(3:10)) {
 }
 
 # or with variable names
-varlist <- c("n_outmig", "n_usualres", "n_totalmig")
+varlist <- c("n_outmig", "n_usualres11", "n_inmig")
 for (i in varlist) {
   print(tabyl(eng_dta[, i]))
 }
 
 
 # or with lapply
-varlist <- c("n_outmig", "n_usualres", "n_totalmig")
+varlist <- c("n_outmig", "n_usualres11", "n_inmig")
 lapply(eng_dta[varlist], tabyl)
 
   #Jay uses tableone instead of tabyl for tabulations, check out links (bookmarked)
@@ -166,13 +166,13 @@ lapply(eng_dta[varlist], tabyl)
 
 
 # Describe size of OAs
-summary(eng_dta$n_usualres)
+summary(eng_dta$n_usualres11)
   # median = 303 residents, max = 4140 - exclude these? 
 
 
 # calculate proportion of current residents who lived at the same address one year ago
 eng_dta <- eng_dta %>% 
-  mutate(prop_samead_1y = as.numeric(n_samead/n_usualres*100))
+  mutate(prop_samead_1y = as.numeric(n_samead/n_usualres11*100))
 summary(eng_dta$prop_samead_1y)
   # median = 90% of people in OA lived at same address a year ago
 
@@ -185,52 +185,50 @@ sum(!is.na(eng_dta$prop_samead_1y))
 
 # Identify areas of net outmigration
   # these are areas where total migrants is smaller than outmigrants
-eng_dta$net_outmig <- ifelse(eng_dta$n_outmig > eng_dta$n_totalmig, 1, 0)
+eng_dta$net_outmig <- ifelse(eng_dta$n_outmig > eng_dta$n_inmig, 1, 0)
 
 # Recreate Brown 2010 classification
-# Identify areas of 10% + net increase (using previous year's residents as denominator)
+# Identify areas of 10% + net increase (using mid year population as denominator)
 eng_dta <- eng_dta %>% 
-  mutate(net_migration = (n_totalmig - n_outmig)/(n_usualres + n_outmig - n_totalmig)*100)
+  mutate(net_migration = (n_inmig - n_outmig)/(midyrpop)*100)
 summary(eng_dta$net_migration)  
-  #median net migration = 0.59% (seems low compared with 16% turnover in previous year in Brown study for Scotland)
+  #median net migration = 0.41% (seems low compared with 16% turnover in previous year in Brown study for Scotland, but what area level did they use?)
 
-sum(eng_dta$net_migration <= -10) #1381
-sum(eng_dta$net_migration >= 10) #10630
-10630/171372 #6%
-1381/171372 #0.8% - not a very big category, think about reclassifying to 5%+ decline? 
+sum(eng_dta$net_migration <= -10) #1730
+sum(eng_dta$net_migration >= 10) #9220
+9220/171372 #5%
+1730/171372 #1% - not a very big category, reclassify to +/- 5% 
 
-sum(eng_dta$net_migration <= -5) #1381
-12325/171372 #7.2% 
-  # probably makes more sense to use 5% cut-off for high in/out-migration areas (see other paper by Brown mentioned by Anne)
+sum(eng_dta$net_migration <= -5) #13732
+13732/171372 #8% 
+  # use 5% cut-off for high in/out-migration areas (see other paper by Brown mentioned by Anne)
 
 
-# Calculate turnover as % of current residents who lived outside the area one year ago
+# Calculate turnover as total inmigrants + outmigrants divided by current residents
   # this includes people moving in from elsewhere in UK and abroad (but not within the area)
+  # (churn would additionally include migration within)
   # Brown et al. exclude people who'd moved from abroad in one of their papers, do we want to do the same?
   
-#NO - KEEP INTERNATIONAL INMIGRANTS IN TURNOVER CALCULATION
- # add outmigrants 
-  # calculating turnover not churn (churn would including migration within )
 
 eng_dta <- eng_dta %>% 
-  mutate(turnover = (n_miguk + n_migfor)/n_usualres*100)
+  mutate(turnover = (n_inmig + n_outmig)/n_usualres11*100)
 summary(eng_dta$turnover)
-  #median turnover = 9.6% (lower than 16% turnover in previous year in Brown study for Scotland)
+  #median turnover = 19% (similar to 16% turnover in previous year in Brown study for Scotland)
 
 
 # Create variable with mobility categories
   # below does not work
 eng_dta$mob_cat <- as.factor(ifelse(eng_dta$net_migration <= -5, 'Decreasing', 
                             ifelse(eng_dta$net_migration >= 5, 'Increasing',
-                            ifelse(eng_dta$turnover >= 9.6, 'Stable, high turnover',
-                            ifelse(eng_dta$turnover <9.6, 'Stable, low turnover', 'Error' )))))       
+                            ifelse(eng_dta$turnover >= 19, 'Stable, high turnover',
+                            ifelse(eng_dta$turnover <19, 'Stable, low turnover', 'Error' )))))       
   
 eng_dta <- eng_dta %>%
   mutate(mob_cat = case_when(
     net_migration <= -5 ~ "Decreasing",
     net_migration >= 5 ~ "Increasing",
-    net_migration > -5 & net_migration < 5 & turnover >= 9.6 ~ "Stable, high turnover",
-    net_migration > -5 & net_migration < 5 & turnover <9.6 ~ "Stable, low turnover"
+    net_migration > -5 & net_migration < 5 & turnover >= 19 ~ "Stable, high turnover",
+    net_migration > -5 & net_migration < 5 & turnover <19 ~ "Stable, low turnover"
   ))
   
 #Advice from Jay: 
@@ -245,3 +243,12 @@ eng_dta <- eng_dta %>%
 tabyl(eng_dta$mob_cat)
   # Stable, low turnover accounts for 44% of all OAs in England for period 2010-11
 
+
+#Save dataset 
+
+buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
+
+s3write_using(eng_dta # What R object we are saving
+              , FUN = write_rds # Which R function we are using to save
+              , object = 'eng_dta_OA.RDS' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above
