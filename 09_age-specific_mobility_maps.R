@@ -34,10 +34,10 @@ str(msoa_shp)
 
 
 #load mobility MSOA data
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
+buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping' ## my bucket name
 
 age_dta<-s3read_using(readRDS # Which function are we using to read
-                      , object = 'eng_age_dta_MSOA.RDS' # File to open
+                      , object = 'data/clean/eng_age_dta_MSOA.RDS' # File to open
                       , bucket = buck) # Bucket name defined above
 
 # Join spatial data
@@ -70,6 +70,11 @@ map9_1 <- tm_shape(msoa_shp) +
             legend.bg.color = "white",
             legend.bg.alpha = 1)
 map9_1
+s3write_using(map9_1 # What R object we are saving
+              , FUN = tmap_save # Which R function we are using to save
+              , object = 'outputs/map9_1_meanage_nonmovers.tiff' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+
 
 
 # Map 9.2 - map of mean age among in-migrants
@@ -83,6 +88,11 @@ map9_2 <- tm_shape(msoa_shp) +
             legend.bg.color = "white",
             legend.bg.alpha = 1)
 map9_2
+s3write_using(map9_2 # What R object we are saving
+              , FUN = tmap_save # Which R function we are using to save
+              , object = 'outputs/map9_2_meanage_inmigs.tiff' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+
 
 
 # Map 9.3 - map of mean age among outmigrants
@@ -96,6 +106,10 @@ map9_3 <- tm_shape(msoa_shp) +
             legend.bg.color = "white",
             legend.bg.alpha = 1)
 map9_3
+s3write_using(map9_3 # What R object we are saving
+              , FUN = tmap_save # Which R function we are using to save
+              , object = 'outputs/map9_3_meanage_outmigs.tiff' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
 
 
 # Map 9.4 - map of difference in meant age of inmigrants and outmigrants
@@ -110,6 +124,14 @@ map9_4 <- tm_shape(msoa_shp) +
             legend.bg.color = "white",
             legend.bg.alpha = 1)
 map9_4
+s3write_using(map9_4 # What R object we are saving
+              , FUN = tmap_save # Which R function we are using to save
+              , object = 'outputs/map9_4_meanage_diffinoutmig.tiff' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+
+
+
+
 
 
 # Make maps for selected metro areas - London
