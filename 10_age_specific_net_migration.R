@@ -168,9 +168,9 @@ grDevices::palette(pal_THF)
 buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/outputs' ## my bucket name
 
 
-map9_1 <- tm_shape(msoa_shp) +
+map10_1 <- tm_shape(msoa_shp) +
   tm_borders(,alpha=0) +
-  tm_fill(col = "under_34_netmigration_lab", palette = "viridis", title = "Under 34 Net migration rate per 1,000 people") +
+  tm_fill(col = "under_34_netmigration_lab", palette = "viridis", title = "Under 34 Net migration (%)") +
   tm_layout(legend.title.size = 0.8,
             legend.text.size = 0.6,
             legend.position = c("left","top"),
@@ -179,11 +179,14 @@ map9_1 <- tm_shape(msoa_shp) +
 # +
 #   tm_text(text="MSOA11NM")
 
-map9_1
+map10_1
 
+filepath<- here::here('outputs', "map10_1.png")
 
-map9_2<-tm_shape(msoa_shp) +
-  tm_fill(col = "x35_to_64_netmigration_lab", palette = "viridis", title = "35-64 Net migration rate per 1,000 people") +
+tmap_save(map10_1,filepath)
+
+map10_2<-tm_shape(msoa_shp) +
+  tm_fill(col = "x35_to_64_netmigration_lab", palette = "viridis", title = "35-64 Net migration (%)") +
   tm_borders(alpha=0)  +
   tm_layout(legend.title.size = 0.8,
             legend.text.size = 0.6,
@@ -191,10 +194,14 @@ map9_2<-tm_shape(msoa_shp) +
             legend.bg.color = "white",
             legend.bg.alpha = 1)
 
-map9_2 
+map10_2 
 
-map9_3<-tm_shape(msoa_shp) +
-  tm_fill(col = "x65plus_netmigration_lab", style = "cat", palette = "viridis", title = "65+ Net migration rate per 1,000 people") +
+filepath<- here::here('outputs', "map10_2.png")
+
+tmap_save(map10_2,filepath)
+
+map10_3<-tm_shape(msoa_shp) +
+  tm_fill(col = "x65plus_netmigration_lab", style = "cat", palette = "viridis", title = "65+ Net migration (%)") +
   tm_borders(alpha=0)  +
   tm_layout(legend.title.size = 0.8,
             legend.text.size = 0.6,
@@ -202,20 +209,23 @@ map9_3<-tm_shape(msoa_shp) +
             legend.bg.color = "white",
             legend.bg.alpha = 1)
 
-map9_3 
+map10_3 
 
+filepath<- here::here('outputs', "map10_3.png")
 
-map9<-tmap_arrange(map9_1, map9_2, map9_3)
+tmap_save(map10_3,filepath)
 
-map9
-
-
-s3write_using(map9 # What R object we are saving
-              , FUN = tmap_save # Which R function we are using to save
-              , object = 'map9_newcats.png' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above
-
-
+# map9<-tmap_arrange(map9_1, map9_2, map9_3)
+# 
+# map9
+# 
+# 
+# 
+# s3write_using(map9 # What R object we are saving
+#               , FUN = tmap_save # Which R function we are using to save
+#               , object = 'map9_newcats.png' # Name of the file to save to (include file type)
+#               , bucket = buck) # Bucket name defined above
+# 
 
 # tmap_save(map3, here("outputs", "map3_mobility_MSOAs.tiff"))
 # # Note: need to figure out how to export maps with sw3 commands
@@ -232,18 +242,21 @@ ldn_msoa_shp <- msoa_shp %>%
 
 
 # M map of - London
-map10_1 <- tm_shape(ldn_msoa_shp) +
+map10_4 <- tm_shape(ldn_msoa_shp) +
   tm_borders(,alpha=0) +
-  tm_fill(col = "under_34_netmigration_lab", palette = "viridis", title = "Under 34 Net migration rate in London per 1,000 people") +
+  tm_fill(col = "under_34_netmigration_lab", palette = "viridis", title = "Under 34 Net migration rate in London (%)") +
   tm_layout(legend.title.size = 0.8,
             legend.text.size = 0.6,
             legend.position = c("left","top"),
             legend.bg.color = "white",
             legend.bg.alpha = 1)
-map10_1
 
-map10_2<-tm_shape(ldn_msoa_shp) +
-  tm_fill(col = "x35_to_64_netmigration_lab", palette = "viridis", title = "35-64 Net migration rate in London per 1,000 people") +
+filepath<- here::here('outputs', "map10_4.png")
+
+tmap_save(map10_4,filepath)
+
+map10_5<-tm_shape(ldn_msoa_shp) +
+  tm_fill(col = "x35_to_64_netmigration_lab", palette = "viridis", title = "35-64 Net migration rate in London (%)") +
   tm_borders(alpha=0)  +
   tm_layout(legend.title.size = 0.8,
             legend.text.size = 0.6,
@@ -251,10 +264,12 @@ map10_2<-tm_shape(ldn_msoa_shp) +
             legend.bg.color = "white",
             legend.bg.alpha = 1)
 
-map10_2 
+filepath<- here::here('outputs', "map10_5.png")
 
-map10_3<-tm_shape(ldn_msoa_shp) +
-  tm_fill(col = "x65plus_netmigration_lab", style = "cat", palette = "viridis", title = "65+ Net migration rate in London per 1,000 people") +
+tmap_save(map10_5,filepath)
+
+map10_6<-tm_shape(ldn_msoa_shp) +
+  tm_fill(col = "x65plus_netmigration_lab", style = "cat", palette = "viridis", title = "65+ Net migration rate in London (%)") +
   tm_borders(alpha=0)  +
   tm_layout(legend.title.size = 0.8,
             legend.text.size = 0.6,
@@ -262,18 +277,19 @@ map10_3<-tm_shape(ldn_msoa_shp) +
             legend.bg.color = "white",
             legend.bg.alpha = 1)
 
-map10_3 
+filepath<- here::here('outputs', "map10_6.png")
 
+tmap_save(map10_6,filepath)
 
-map10<-tmap_arrange(map10_1, map10_2, map10_3)
-
-map10
-
-
-s3write_using(map10 # What R object we are saving
-              , FUN = tmap_save # Which R function we are using to save
-              , object = 'map10_newcats.png' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above
+# map10<-tmap_arrange(map10_1, map10_2, map10_3)
+# 
+# map10
+# 
+# 
+# s3write_using(map10 # What R object we are saving
+#               , FUN = tmap_save # Which R function we are using to save
+#               , object = 'map10_newcats.png' # Name of the file to save to (include file type)
+#               , bucket = buck) # Bucket name defined above
 
 
 
