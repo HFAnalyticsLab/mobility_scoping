@@ -94,7 +94,13 @@ age_dta <- age_dta %>%
 age_dta <- age_dta %>%
   mutate(diff_2010_11 = meanage_usualres11-meanage_usualres10)
 
-
+age_dta <- age_dta %>%
+  mutate(diff_2010_11_cat = case_when(
+    diff_2010_11 < -0.5 ~ "< -0.5",
+    diff_2010_11 >= -0.5 & diff_2010_11 < 0.5 ~ "No change",
+    diff_2010_11 > 0.5 ~ ">0.5"
+    ))
+tabyl(age_dta$diff_2010_11_cat, show_na = T)
 
 
 # tab data
@@ -110,6 +116,14 @@ age_dta %>%
 age_dta %>%
   summarise(min(meanage_diff), mean(meanage_diff), max(meanage_diff))
 
+age_dta %>%
+  summarise(min(meanage_usualres11), mean(meanage_usualres11), max(meanage_usualres11))
+
+age_dta %>%
+  summarise(min(meanage_usualres10), mean(meanage_usualres10), max(meanage_usualres10))
+
+age_dta %>%
+  summarise(min(diff_2010_11), mean(diff_2010_11), max(diff_2010_11))
 
 
 #Save dataset 
