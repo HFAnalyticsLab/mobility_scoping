@@ -130,6 +130,73 @@ s3write_using(map9_4 # What R object we are saving
               , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
 
 
+# Map 9.5 - map of mean age of usual residents in 2010
+map9_5 <- tm_shape(msoa_shp) +
+  tm_borders(, alpha=0) +
+  tm_fill(col = "meanage_usualres10", style = "cont", palette = "viridis", title = "Mean age - usual residents in 2010") +
+  tm_borders(lwd = 0)  +
+  tm_layout(legend.title.size = 0.8,
+            legend.text.size = 0.6,
+            legend.position = c("left","top"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+map9_5
+s3write_using(map9_5 # What R object we are saving
+              , FUN = tmap_save # Which R function we are using to save
+              , object = 'outputs/map9_5_meanage_usualres10.tiff' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+
+
+# Map 9.6 - map of mean age of usual residents in 2011
+map9_6 <- tm_shape(msoa_shp) +
+  tm_borders(, alpha=0) +
+  tm_fill(col = "meanage_usualres11", style = "cont", palette = "viridis", title = "Mean age - usual residents in 2011") +
+  tm_borders(lwd = 0)  +
+  tm_layout(legend.title.size = 0.8,
+            legend.text.size = 0.6,
+            legend.position = c("left","top"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+map9_6
+s3write_using(map9_6 # What R object we are saving
+              , FUN = tmap_save # Which R function we are using to save
+              , object = 'outputs/map9_6_meanage_usualres11.tiff' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+
+
+# Map 9.7 - map of difference in mean age 2010-11
+map9_7 <- tm_shape(msoa_shp) +
+  tm_borders(, alpha=0) +
+  tm_fill(col = "diff_2010_11", style = "cont", palette = pal, title = "Mean age diff. - 2010/11") +
+  tm_borders(lwd = 0)  +
+  tm_layout(legend.title.size = 0.8,
+            legend.text.size = 0.6,
+            legend.position = c("left","top"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+map9_7
+s3write_using(map9_7 # What R object we are saving
+              , FUN = tmap_save # Which R function we are using to save
+              , object = 'outputs/map9_7_meanage_diff2010-11.tiff' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+
+
+# Map 9.8 - map of difference in mean age - categorical 2010/11
+map9_8 <- tm_shape(msoa_shp) +
+  tm_borders(, alpha=0) +
+  tm_fill(col = "diff_2010_11_cat", style = "cont", palette = "viridis" , title = "Mean age diff. - 2010/11") +
+  tm_borders(lwd = 0)  +
+  tm_layout(legend.title.size = 0.8,
+            legend.text.size = 0.6,
+            legend.position = c("left","top"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+map9_8
+s3write_using(map9_8 # What R object we are saving
+              , FUN = tmap_save # Which R function we are using to save
+              , object = 'outputs/map9_8_meanage_diff2010-11_cat.tiff' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+
 
 
 
@@ -144,8 +211,8 @@ ldn_msoa_shp <- msoa_shp %>%
 
 
 
-# Map 9.5 - age of non-movers - London
-map9_5 <- tm_shape(ldn_msoa_shp) +
+# Map 9.9 - age of non-movers - London
+map9_9 <- tm_shape(ldn_msoa_shp) +
   tm_borders(, alpha=0) +
   tm_fill(col = "meanage_samead", style = "cont", palette = "viridis", title = "Mean age non-movers") +
   tm_borders(lwd = 0)  +
@@ -154,11 +221,11 @@ map9_5 <- tm_shape(ldn_msoa_shp) +
             legend.position = c("left","top"),
             legend.bg.color = "white",
             legend.bg.alpha = 1)
-map9_5
+map9_9
 
 
-# Map 9.6 - age of inmigrants - London
-map9_6 <- tm_shape(ldn_msoa_shp) +
+# Map 9.10 - age of inmigrants - London
+map9_10 <- tm_shape(ldn_msoa_shp) +
   tm_borders(, alpha=0) +
   tm_fill(col = "meanage_totalmig", style = "cont", palette = "viridis", title = "Mean age inmigrants") +
   tm_borders(lwd = 0)  +
@@ -167,11 +234,11 @@ map9_6 <- tm_shape(ldn_msoa_shp) +
             legend.position = c("left","bottom"),
             legend.bg.color = "white",
             legend.bg.alpha = 1)
-map9_6
+map9_10
 
 
-# Map 9.7 - age of outmigrants - London
-map9_7 <- tm_shape(ldn_msoa_shp) +
+# Map 9.11 - age of outmigrants - London
+map9_11 <- tm_shape(ldn_msoa_shp) +
   tm_borders(, alpha=0) +
   tm_fill(col = "meanage_outmig", style = "cont", palette = "viridis", title = "Mean age outmigrants") +
   tm_borders(lwd = 0)  +
@@ -180,13 +247,12 @@ map9_7 <- tm_shape(ldn_msoa_shp) +
             legend.position = c("left","bottom"),
             legend.bg.color = "white",
             legend.bg.alpha = 1)
-map9_7
+map9_11
 
 
 
-# Map 9.8 - difference in mean age - London
-pal <- wes_palette("Zissou1", 100, type = "continuous")
-map9_8 <- tm_shape(ldn_msoa_shp) +
+# Map 9.12 - difference in mean age - London
+map9_12 <- tm_shape(ldn_msoa_shp) +
   tm_borders(, alpha=0) +
   tm_fill(col = "meanage_diff", style = "cont", palette = pal, title = "Difference mean age") +
   tm_borders(lwd = 0)  +
@@ -195,4 +261,74 @@ map9_8 <- tm_shape(ldn_msoa_shp) +
             legend.position = c("left","bottom"),
             legend.bg.color = "white",
             legend.bg.alpha = 1)
-map9_8
+map9_12
+
+
+
+# Map 9.13 - map of mean age of usual residents in 2010
+map9_13 <- tm_shape(ldn_msoa_shp) +
+  tm_borders(, alpha=0) +
+  tm_fill(col = "meanage_usualres10", style = "cont", palette = "viridis", title = "Mean age - usual residents in 2010") +
+  tm_borders(lwd = 0)  +
+  tm_layout(legend.title.size = 0.8,
+            legend.text.size = 0.6,
+            legend.position = c("left","top"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+map9_13
+s3write_using(map9_13 # What R object we are saving
+              , FUN = tmap_save # Which R function we are using to save
+              , object = 'outputs/map9_13_meanage_usualres10_ldn.tiff' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+
+
+# Map 9.14 - map of mean age of usual residents in 2011
+map9_14 <- tm_shape(ldn_msoa_shp) +
+  tm_borders(, alpha=0) +
+  tm_fill(col = "meanage_usualres11", style = "cont", palette = "viridis", title = "Mean age - usual residents in 2011") +
+  tm_borders(lwd = 0)  +
+  tm_layout(legend.title.size = 0.8,
+            legend.text.size = 0.6,
+            legend.position = c("left","top"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+map9_14
+s3write_using(map9_14 # What R object we are saving
+              , FUN = tmap_save # Which R function we are using to save
+              , object = 'outputs/map9_14_meanage_usualres11_ldn.tiff' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+
+
+# Map 9.15 - map of difference in mean age 2010-11
+map9_15 <- tm_shape(ldn_msoa_shp) +
+  tm_borders(, alpha=0) +
+  tm_fill(col = "diff_2010_11", style = "cont", palette = pal, title = "Mean age diff. - 2010/11") +
+  tm_borders(lwd = 0)  +
+  tm_layout(legend.title.size = 0.8,
+            legend.text.size = 0.6,
+            legend.position = c("left","top"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+map9_15
+s3write_using(map9_15 # What R object we are saving
+              , FUN = tmap_save # Which R function we are using to save
+              , object = 'outputs/map9_15_meanage_diff2010-11_ldn.tiff' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+
+
+# Map 9.16 - map of difference in mean age - categorical 2010/11
+map9_16 <- tm_shape(ldn_msoa_shp) +
+  tm_borders(, alpha=0) +
+  tm_fill(col = "diff_2010_11_cat", style = "cont", palette = "viridis" , title = "Mean age diff. - 2010/11") +
+  tm_borders(lwd = 0)  +
+  tm_layout(legend.title.size = 0.8,
+            legend.text.size = 0.6,
+            legend.position = c("left","top"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+map9_16
+s3write_using(map9_16 # What R object we are saving
+              , FUN = tmap_save # Which R function we are using to save
+              , object = 'outputs/map9_16_meanage_diff2010-11_cat_ldn.tiff' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+
