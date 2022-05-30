@@ -6,6 +6,7 @@ output:
     toc: true
     toc_float: true
     theme: paper
+    
 
 ---
 
@@ -48,6 +49,8 @@ This is an R markdown document to show initial maps for scoping
 
 ### Under 35 
 ```{r echo=FALSE}
+
+
 img1_path <- here::here('outputs', "map10_1.png")
 img1 <- readPNG(img1_path, native = TRUE, info = TRUE)
 
@@ -65,10 +68,11 @@ img1 <- readPNG(img1_path, native = TRUE, info = TRUE)
 include_graphics(img1_path)
 
 
+
 ```
 
 
-### 65+ years 
+### 65+ years
 ```{r echo=FALSE}
 img1_path <- here::here('outputs', "map10_3.png")
 img1 <- readPNG(img1_path, native = TRUE, info = TRUE)
@@ -79,7 +83,7 @@ include_graphics(img1_path)
 ```
 
 
-## Net migration by age (London) {.tabset .tabset-dropdown}
+## Net migration by age (London) {.tabset}
 
 ### Under 35 
 ```{r echo=FALSE}
@@ -113,7 +117,7 @@ include_graphics(img1_path)
 
 ```
 
-## Mean age (England)  {.tabset .tabset-dropdown} 
+## Mean age (England and Wales)  {.tabset} 
 
 ### Usual residents in 2010
 ```{r echo=FALSE}
@@ -158,7 +162,7 @@ include_graphics(img1_path)
 ```
 
 
-## Mean age (London)  {.tabset .tabset-dropdown} 
+## Mean age (London)  {.tabset} 
 
 ### Usual residents in 2010
 ```{r echo=FALSE}
@@ -204,7 +208,7 @@ include_graphics(img1_path)
 
 
 
-## Net Migration and MSOA IMD (England)  {.tabset .tabset-dropdown} 
+## Net Migration and MSOA IMD (England)  {.tabset} 
 
 ### MSOA rank
 ```{r echo=FALSE}
@@ -239,7 +243,7 @@ include_graphics(img1_path)
 ```
 
 
-## Churn index for England (LSOA level) {.tabset .tabset-dropdown}
+## Churn index for England (LSOA level) {.tabset}
 
 The churn index from 1997-2020. 
 The data simply provides a ratio of the households that are different in each LSOA between the end of 2020 and the end of each year going back to 1997. 
@@ -293,7 +297,7 @@ map_churn(data=lsoa_shp, var="chn2011")
 map_churn(data=lsoa_shp, var="chn2019")
 ```
 
-## Churn index for London only (LSOA level) {.tabset .tabset-dropdown}
+## Churn index for London only (LSOA level) {.tabset}
 
 ```{r, echo=FALSE}
 
@@ -327,5 +331,5 @@ map_churn(data=ldn_lsoa_shp, var="chn2011")
 
 ### 2019
 ```{r, echo=FALSE}
-map_churn(data=ldn_lsoa_shp, var="chn2011")
+map_churn(data=ldn_lsoa_shp, var="chn2019")
 ```
