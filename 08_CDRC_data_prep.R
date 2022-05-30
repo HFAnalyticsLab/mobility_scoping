@@ -8,6 +8,9 @@
 #   bucket = buck
 # )
 
+#tidy lib 
+rm(list=ls())
+
 pacman::p_load(tidyverse,
                sf,
                XML,
@@ -61,7 +64,7 @@ summary(cdrc_lsoa)
 #drop 2020 (no data) and only include LSOA code
 
 cdrc_lsoa_clean<-cdrc_lsoa %>% 
-select(-chn2020) %>% 
+dplyr::select(-chn2020) %>% 
   filter(., grepl("E010", area))
 
 
@@ -156,6 +159,11 @@ lsoa_shp %>%
 # map4
 
 
+##Work out 2010-2011 change 
+
+cdrc_lsoa_clean %>% 
+  select(chn2010,chn2011) %>% 
+  mutate(diff_2010_2011=chn)
 
 
 
