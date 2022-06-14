@@ -41,7 +41,7 @@ age_dta<-s3read_using(readRDS # Which function are we using to read
                       , bucket = buck) # Bucket name defined above
 
 # Join spatial data
-msoa_shp <- left_join(msoa_shp, age_dta, by = c("MSOA11CD" = "geography.code"))
+msoa_shp <- left_join(msoa_shp, age_dta, by = c("MSOA11CD" = "geography_code"))
 # geography.code is the MSOA code in the eng_dta df and MSOA11CD the code in the shapefile data
 
 
@@ -80,7 +80,7 @@ s3write_using(map9_1 # What R object we are saving
 # Map 9.2 - map of mean age among in-migrants
 map9_2 <- tm_shape(msoa_shp) +
   tm_borders(, alpha=0) +
-  tm_fill(col = "meanage_totalmig", style = "cont", palette = "viridis", title = "Mean age in-migrants") +
+  tm_fill(col = "meanage_inmig", style = "cont", palette = "viridis", title = "Mean age in-migrants") +
   tm_borders(lwd = 0)  +
   tm_layout(legend.title.size = 0.8,
             legend.text.size = 0.6,
@@ -227,7 +227,7 @@ map9_9
 # Map 9.10 - age of inmigrants - London
 map9_10 <- tm_shape(ldn_msoa_shp) +
   tm_borders(, alpha=0) +
-  tm_fill(col = "meanage_totalmig", style = "cont", palette = "viridis", title = "Mean age inmigrants") +
+  tm_fill(col = "meanage_inmig", style = "cont", palette = "viridis", title = "Mean age inmigrants") +
   tm_borders(lwd = 0)  +
   tm_layout(legend.title.size = 0.8,
             legend.text.size = 0.6,
