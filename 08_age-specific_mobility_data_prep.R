@@ -63,7 +63,7 @@ for (age in ages){
   age_dta <- age_dta %>%
     mutate( !!paste0("n_usualres11_", age) := !!as.name(paste0("n_samead_", age)) + !!as.name(paste0("n_inmig_", age)) + !!as.name(paste0("n_movedwithin_", age)))
   
-  }  
+}  
 
 age_dta <- age_dta %>%
   mutate(n_usualres10 = n_samead + n_outmig + n_movedwithin,
