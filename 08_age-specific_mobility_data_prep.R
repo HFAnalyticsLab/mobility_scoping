@@ -148,23 +148,13 @@ ages <- c("0_4", "5_15", "16_19", "20_24", "25_34", "35_49", "50_64", "65_74", "
 for (age in ages){
   age_dta <- age_dta %>%
     mutate(counter = counter +  !!as.name(paste0("n_samead_", age)))
-  print(age_dta$counter)
   age_dta <- age_dta %>%
-    mutate(median_cat = replace(median_cat, cutoff <= counter && median_cat == "", age)) 
+    mutate(median_cat = replace(median_cat, cutoff <= counter & median_cat == "", age)) 
   }
 
-# NOTE: this gives median = 35_49 for all rows, which is incorrect. Haven't found the solution yet
+tabyl(age_dta$median_cat)
 
-# alternative syntax giving same result
-# if (age_dta$cutoff <= age_dta$counter && age_dta$median_cat == "") {
-#  age_dta <- age_dta %>%
-#    mutate(median_cat = age) 
-# }
-
-age_dta <- age_dta %>%
-  mutate(count = n_samead_0_4  + n_samead_5_15 + n_samead_16_19 + n_samead_20_24 + n_samead_25_34 + n_samead_35_49)
-dplyr::select(age_dta, starts_with("n_samead"), cutoff, median_cat, count)
-
+age_dta %>% dplyr::select(contains("n_samead"), cutoff, median_cat)
 
 
 
