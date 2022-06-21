@@ -130,9 +130,11 @@ age_dta %>%
 
 
 # calculate medians
+
+# samead
 # create empty variable
 age_dta <- age_dta %>% 
-  mutate(median_cat="")
+  mutate(median_samead="")
 
 #calculate cutoff for median
   age_dta <- age_dta %>%
@@ -149,14 +151,155 @@ for (age in ages){
   age_dta <- age_dta %>%
     mutate(counter = counter +  !!as.name(paste0("n_samead_", age)))
   age_dta <- age_dta %>%
-    mutate(median_cat = replace(median_cat, cutoff <= counter & median_cat == "", age)) 
+    mutate(median_samead = replace(median_samead, cutoff <= counter & median_samead == "", age)) 
   }
 
-tabyl(age_dta$median_cat)
+tabyl(age_dta$median_samead)
 
-age_dta %>% dplyr::select(contains("n_samead"), cutoff, median_cat)
+#view results
+age_dta %>% dplyr::select(contains("n_samead"), cutoff, median_samead)
 
 
+# inmig
+# create empty variable
+age_dta <- age_dta %>% 
+  mutate(median_inmig="")
+
+#calculate cutoff for median
+age_dta <- age_dta %>%
+  mutate(cutoff = n_inmig/2)
+
+# create counter variable (0 to start with)
+age_dta <- age_dta %>%
+  mutate(counter = 0)
+
+
+ages <- c("0_4", "5_15", "16_19", "20_24", "25_34", "35_49", "50_64", "65_74", "75p")
+
+for (age in ages){
+  age_dta <- age_dta %>%
+    mutate(counter = counter +  !!as.name(paste0("n_inmig_", age)))
+  age_dta <- age_dta %>%
+    mutate(median_inmig = replace(median_inmig, cutoff <= counter & median_inmig == "", age)) 
+}
+
+tabyl(age_dta$median_inmig)
+
+
+# outmig
+# create empty variable
+age_dta <- age_dta %>% 
+  mutate(median_outmig="")
+
+#calculate cutoff for median
+age_dta <- age_dta %>%
+  mutate(cutoff = n_outmig/2)
+
+# create counter variable (0 to start with)
+age_dta <- age_dta %>%
+  mutate(counter = 0)
+
+
+ages <- c("0_4", "5_15", "16_19", "20_24", "25_34", "35_49", "50_64", "65_74", "75p")
+
+for (age in ages){
+  age_dta <- age_dta %>%
+    mutate(counter = counter +  !!as.name(paste0("n_outmig_", age)))
+  age_dta <- age_dta %>%
+    mutate(median_outmig = replace(median_outmig, cutoff <= counter & median_outmig == "", age)) 
+}
+
+tabyl(age_dta$median_outmig)
+
+
+# median_diff
+age_dta <- age_dta %>%
+  mutate(median_diff = case_when(median_inmig == median_outmig ~ "same median age",
+                                 median_inmig == '16_19' & (median_outmig == '20_24' | median_outmig == '25_34') ~ "lower median inmig age",
+                                 median_inmig == '20_24' & median_outmig == '25_34' ~ "lower median inmig age",
+                                 median_inmig == '25_34' & median_outmig == '35_49' ~ "lower median inmig age",
+                                 median_outmig == '16_19' & (median_inmig == '20_24' | median_inmig == '25_34') ~ "higher median inmig age",
+                                 median_outmig == '20_24' & (median_inmig == '25_34' | median_inmig == '35_49') ~ "higher median inmig age",
+                                 median_outmig == '25_34' & (median_inmig == '35_49' | median_inmig == '50_64') ~ "higher median inmig age",
+                                 median_outmig == '35_49' & median_inmig == '50_64' ~ "higher median inmig age"
+                                 )
+  )
+tabyl(age_dta$median_diff, show_na = T)
+#view results
+age_dta %>% dplyr::select(median_inmig, median_outmig, median_diff)
+
+
+
+# usual residents 2011
+# create empty variable
+age_dta <- age_dta %>% 
+  mutate(median_usualres11="")
+
+#calculate cutoff for median
+age_dta <- age_dta %>%
+  mutate(cutoff = n_usualres11/2)
+
+# create counter variable (0 to start with)
+age_dta <- age_dta %>%
+  mutate(counter = 0)
+
+
+ages <- c("0_4", "5_15", "16_19", "20_24", "25_34", "35_49", "50_64", "65_74", "75p")
+
+for (age in ages){
+  age_dta <- age_dta %>%
+    mutate(counter = counter +  !!as.name(paste0("n_usualres11_", age)))
+  age_dta <- age_dta %>%
+    mutate(median_usualres11 = replace(median_usualres11, cutoff <= counter & median_usualres11 == "", age)) 
+}
+
+tabyl(age_dta$median_usualres11)
+
+
+# usual residents 2010
+# create empty variable
+age_dta <- age_dta %>% 
+  mutate(median_usualres10="")
+
+#calculate cutoff for median
+age_dta <- age_dta %>%
+  mutate(cutoff = n_usualres10/2)
+
+# create counter variable (0 to start with)
+age_dta <- age_dta %>%
+  mutate(counter = 0)
+
+
+ages <- c("0_4", "5_15", "16_19", "20_24", "25_34", "35_49", "50_64", "65_74", "75p")
+
+for (age in ages){
+  age_dta <- age_dta %>%
+    mutate(counter = counter +  !!as.name(paste0("n_usualres10_", age)))
+  age_dta <- age_dta %>%
+    mutate(median_usualres10 = replace(median_usualres10, cutoff <= counter & median_usualres10 == "", age)) 
+}
+
+tabyl(age_dta$median_usualres10)
+
+tabyl(age_dta, median_usualres11, median_usualres10)
+
+
+# median_diff_1011
+age_dta <- age_dta %>%
+  mutate(median_diff_1011 = case_when(median_usualres10 == median_usualres11 ~ "same median age",
+                                      median_usualres10 == '16_19' & (median_usualres11 == '20_24' | median_usualres11 == '25_34') ~ "lower median 2010 age",
+                                      median_usualres10 == '20_24' & median_usualres11 == '25_34' ~ "lower median 2010 age",
+                                      median_usualres10 == '25_34' & median_usualres11 == '35_49' ~ "lower median 2010 age", 
+                                      median_usualres10 == '35_49' & median_usualres11 == '50_64' ~ "lower median 2010 age",
+                                      median_usualres11 == '16_19' & (median_usualres10 == '20_24' | median_usualres10 == '25_34') ~ "higher median 2010 age",
+                                      median_usualres11 == '20_24' & (median_usualres10 == '25_34' | median_usualres10 == '35_49') ~ "higher median 2010 age",
+                                      median_usualres11 == '25_34' & (median_usualres10 == '35_49' | median_usualres10 == '50_64') ~ "higher median 2010 age",
+                                      median_usualres11 == '35_49' & median_usualres10 == '50_64' ~ "higher median 2010 age"
+  )
+  )
+tabyl(age_dta$median_diff_1011, show_na = T)
+#view results
+age_dta %>% dplyr::select(median_usualres10, median_usualres11, median_diff_1011)
 
 
 
