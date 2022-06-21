@@ -332,3 +332,126 @@ s3write_using(map9_16 # What R object we are saving
               , object = 'outputs/map9_16_meanage_diff2010-11_cat_ldn.tiff' # Name of the file to save to (include file type)
               , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
 
+
+
+# Map 9.17 - map of median age among residents living at same address one year ago
+map9_17 <- tm_shape(msoa_shp) +
+  tm_borders(, alpha=0) +
+  tm_fill(col = "median_samead", style = "cont", palette = "viridis", title = "Median age non-movers") +
+  tm_borders(lwd = 0)  +
+  tm_layout(legend.title.size = 0.8,
+            legend.text.size = 0.6,
+            legend.position = c("left","top"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+map9_17
+s3write_using(map9_17 # What R object we are saving
+              , FUN = tmap_save # Which R function we are using to save
+              , object = 'outputs/map9_17_medianage_nonmovers.tiff' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+
+
+
+# Map 9.18 - map of median age among in-migrants
+map9_18 <- tm_shape(msoa_shp) +
+  tm_borders(, alpha=0) +
+  tm_fill(col = "median_inmig", style = "cont", palette = "viridis", title = "Median age in-migrants") +
+  tm_borders(lwd = 0)  +
+  tm_layout(legend.title.size = 0.8,
+            legend.text.size = 0.6,
+            legend.position = c("left","top"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+map9_18
+s3write_using(map9_18 # What R object we are saving
+              , FUN = tmap_save # Which R function we are using to save
+              , object = 'outputs/map9_18_medianage_inmigs.tiff' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+
+
+
+# Map 9.19 - map of median age among outmigrants
+map9_19 <- tm_shape(msoa_shp) +
+  tm_borders(, alpha=0) +
+  tm_fill(col = "median_outmig", style = "cont", palette = "viridis", title = "Median age out-migrants") +
+  tm_borders(lwd = 0)  +
+  tm_layout(legend.title.size = 0.8,
+            legend.text.size = 0.6,
+            legend.position = c("left","top"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+map9_19
+s3write_using(map9_19 # What R object we are saving
+              , FUN = tmap_save # Which R function we are using to save
+              , object = 'outputs/map9_19_medianage_outmigs.tiff' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+
+
+# Map 9.20 - map of difference in median age of inmigrants and outmigrants
+map9_20 <- tm_shape(msoa_shp) +
+  tm_borders(, alpha=0) +
+  tm_fill(col = "median_diff", style = "cat", palette = "viridis", title = "Median age difference") +
+  tm_borders(lwd = 0)  +
+  tm_layout(legend.title.size = 0.8,
+            legend.text.size = 0.6,
+            legend.position = c("left","top"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+map9_20
+s3write_using(map9_20 # What R object we are saving
+              , FUN = tmap_save # Which R function we are using to save
+              , object = 'outputs/map9_20_medianage_diffinoutmig.tiff' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+
+
+# Map 9.21 - map of median age of usual residents in 2010
+map9_21 <- tm_shape(msoa_shp) +
+  tm_borders(, alpha=0) +
+  tm_fill(col = "median_usualres10", style = "cont", palette = "viridis", title = "Median age - usual residents in 2010") +
+  tm_borders(lwd = 0)  +
+  tm_layout(legend.title.size = 0.8,
+            legend.text.size = 0.6,
+            legend.position = c("left","top"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+map9_21
+s3write_using(map9_21 # What R object we are saving
+              , FUN = tmap_save # Which R function we are using to save
+              , object = 'outputs/map9_21_medianage_usualres10.tiff' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+
+
+# Map 9.22 - map of median age of usual residents in 2011
+map9_22 <- tm_shape(msoa_shp) +
+  tm_borders(, alpha=0) +
+  tm_fill(col = "median_usualres11", style = "cont", palette = "viridis", title = "Median age - usual residents in 2011") +
+  tm_borders(lwd = 0)  +
+  tm_layout(legend.title.size = 0.8,
+            legend.text.size = 0.6,
+            legend.position = c("left","top"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+map9_22
+s3write_using(map9_22 # What R object we are saving
+              , FUN = tmap_save # Which R function we are using to save
+              , object = 'outputs/map9_22_medianage_usualres11.tiff' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+
+
+# Map 9.23 - map of difference in median age 2010-11
+map9_23 <- tm_shape(msoa_shp) +
+  tm_borders(, alpha=0) +
+  tm_fill(col = "median_diff_1011", style = "cat", palette = "viridis", title = "Median age diff. - 2010/11") +
+  tm_borders(lwd = 0)  +
+  tm_layout(legend.title.size = 0.8,
+            legend.text.size = 0.6,
+            legend.position = c("left","top"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+map9_23
+s3write_using(map9_23 # What R object we are saving
+              , FUN = tmap_save # Which R function we are using to save
+              , object = 'outputs/map9_23_medianage_diff2010-11.tiff' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+
+
