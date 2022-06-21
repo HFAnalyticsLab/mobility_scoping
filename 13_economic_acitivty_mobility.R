@@ -120,9 +120,9 @@ pal_THF <- c('#dd0031', '#53a9cd',  '#744284',  '#ffd412',   '#2a7979', '#ee9b90
 grDevices::palette(pal_THF)
 # not sure what the palette command does
 
-
-# Map 9.1 - map of net migration rate by age
+#For saving maps 
 buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/outputs' ## my bucket name
+
 
 
 map13_1 <- tm_shape(msoa_shp) +
@@ -138,6 +138,10 @@ map13_1 <- tm_shape(msoa_shp) +
 
 map13_1
 
+filepath<- here::here('outputs', "map13_1.png")
+
+tmap_save(map13_1,filepath)
+
 map13_2 <- tm_shape(msoa_shp) +
   tm_borders(,alpha=0) +
   tm_fill(col = "economically_active_netmigration_lab", palette = "viridis", title = "Economically active Net migration (%)") +
@@ -150,6 +154,10 @@ map13_2 <- tm_shape(msoa_shp) +
 #   tm_text(text="MSOA11NM")
 
 map13_2
+
+filepath<- here::here('outputs', "map13_2.png")
+
+tmap_save(map13_2,filepath)
 
 ldn_msoa_shp <- msoa_shp %>% 
   dplyr::filter(, substring(MSOA11CD, 2) < '02000983' & str_detect(MSOA11CD, 'E')) 
@@ -168,6 +176,10 @@ map13_3<- tm_shape(ldn_msoa_shp) +
 
 map13_3
 
+filepath<- here::here('outputs', "map13_3.png")
+
+tmap_save(map13_3,filepath)
+
 map13_4 <- tm_shape(ldn_msoa_shp) +
   tm_borders(,alpha=0) +
   tm_fill(col = "economically_active_netmigration_lab", palette = "viridis", title = "Economically active Net migration (%)") +
@@ -179,3 +191,9 @@ map13_4 <- tm_shape(ldn_msoa_shp) +
 
 
 map13_4
+
+filepath<- here::here('outputs', "map13_4.png")
+
+tmap_save(map13_4,filepath)
+
+
