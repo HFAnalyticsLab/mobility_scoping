@@ -333,3 +333,51 @@ map_churn(data=ldn_lsoa_shp, var="chn2011")
 ```{r, echo=FALSE}
 map_churn(data=ldn_lsoa_shp, var="chn2019")
 ```
+
+## Net migration by Economic Activity (England) {.tabset}
+
+### Economically Active
+```{r echo=FALSE}
+img1_path <- here::here('outputs', "map13_2.png")
+img1 <- readPNG(img1_path, native = TRUE, info = TRUE)
+
+include_graphics(img1_path)
+
+
+```
+
+
+### Economically Inactive
+```{r echo=FALSE}
+img1_path <- here::here('outputs', "map13_1.png")
+img1 <- readPNG(img1_path, native = TRUE, info = TRUE)
+
+include_graphics(img1_path)
+
+
+```
+
+## Net migration by Economic Activity (London) {.tabset}
+
+### Economically Active
+```{r echo=FALSE}
+img1_path <- here::here('outputs', "map13_4.png")
+img1 <- readPNG(img1_path, native = TRUE, info = TRUE)
+
+include_graphics(img1_path)
+
+
+```
+
+
+### Economically Inactive
+```{r echo=FALSE}
+img1_path <- here::here('outputs', "map13_3.png")
+img1 <- readPNG(img1_path, native = TRUE, info = TRUE)
+
+include_graphics(img1_path)
+
+
+```
+
+
