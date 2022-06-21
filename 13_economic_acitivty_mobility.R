@@ -115,6 +115,10 @@ msoa_shp <- left_join(msoa_shp,clean_dta , by = c("MSOA11CD" = "geography_code")
 msoa_shp$ctry_nm <- substr(msoa_shp$MSOA11CD, 1, 1)
 msoa_shp$ctry_nm <- as.factor(msoa_shp$ctry_nm)
 
+
+msoa_shp<-msoa_shp %>% 
+  filter(ctry_nm=="E")
+
 # Prepare THF colour scheme
 pal_THF <- c('#dd0031', '#53a9cd',  '#744284',  '#ffd412',   '#2a7979', '#ee9b90', '#0c402b', '#a6d7d3', '#005078', '#f39214', '#2ca365')
 grDevices::palette(pal_THF)
