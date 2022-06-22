@@ -41,7 +41,7 @@ age_dta<-age_dta %>%
 #remove spaces so that we can refer to column names in functions
 
 
-  # naming second column x until figured out what it  means
+  # naming unneeded colums x, y, z
 names(age_dta)[4:10]<-c('n_samead', 'n_movedwithin' , 'n_inmig','x','y','z','n_outmig')
 names(age_dta)[14:20]<-c('n_samead_0_4', 'n_movedwithin_0_4' , 'n_inmig_0_4','x_0_4', 'y_0_4','z_0_4','n_outmig_0_4')
 names(age_dta)[24:30]<-c('n_samead_5_15', 'n_movedwithin_5_15' , 'n_inmig_5_15','x_5_15', 'y_5_15','z_5_15','n_outmig_5_15')

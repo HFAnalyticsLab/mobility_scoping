@@ -43,7 +43,7 @@ dim(eng_dta)
 eng_dta <- eng_dta %>% 
   distinct() 
 
-# generate columns for LSOA level
+# generate columns for LAD level
 eng_dta <- eng_dta %>%
   group_by(LAD11CD) %>%
   mutate(n_samead_lad = sum(n_samead),
