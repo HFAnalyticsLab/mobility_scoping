@@ -97,6 +97,11 @@ ea_dta_plot<-clean_dta %>%
 t<-boxplot(net_migration~metric,data=ea_dta_plot, main="Net Migration by Health Condition",
            xlab="Limited in daily activities", ylab="Net Migration")
 
+summ(clean_dta$netmigration_limlot)
+summ(clean_dta$netmigration_limlit)
+summ(clean_dta$netmigration_notlim)
+
+
 # recode those <=1% as stable
 clean_dta<-clean_dta %>% 
   mutate(netmigration_limlot_lab=case_when(netmigration_limlot < -1 ~ "Negative (greater than 1% of people leaving)",
