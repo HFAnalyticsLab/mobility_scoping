@@ -19,7 +19,7 @@ pacman::p_load(sf,
 
 
 # import all data
-## data were downloaded from: https://www.nomisweb.co.uk/census/2011/ukmig008
+## data were downloaded from: https://www.nomisweb.co.uk/census/2011/ukmig006
 EA_dta <- s3read_using(import, 
                         object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/msoa_migration_by_economic_activity.csv') # File to open 
 
@@ -199,5 +199,50 @@ map13_4
 filepath<- here::here('outputs', "map13_4.png")
 
 tmap_save(map13_4,filepath)
+
+##Excluded students 
+
+`%notin%` <- Negate(`%in%`)
+
+clean_dta<-EA_dta %>% 
+    dplyr::select(!contains (c("and_full_time_student", "including_full_time_students", 
+                             "all_categories", "total_migration"))) %>% 
+  dplyr::select(contains(c("date", "geography", "geography_code", "same_address", "inflow_total_measures","outflow_total_measures", "within_same_area_measures"))) 
+
+grps<-c("ea_full_time_employment", "ea_part_time_eployment", "ea_unemployed", "ei_retired", "ei_looking_after", "ei_lt_sick_disabled", "ei_other")
+
+
+names(clean_dta)[4:10]<-paste0(grps,"_n_samead")
+names(clean_dta)[11:17]<-paste0(grps,"_n_inmig")
+names(clean_dta)[18:24]<-paste0(grps,"_n_outmig")
+names(clean_dta)[25:31]<-paste0(grps,"_n_movedwithin")
+
+clean_dta<-clean_dta %>% 
+  mutate(ea_n_samead=(ea_full_time_employment_n_samead+ea_part_time_eployment_n_samead+ea_unemployed_n_samead),
+         ei_n_samead=(ei_retired_n_samead+ei_looking_after_n_samead+ei_lt_sick_disabled_n_samead+ei_other_n_samead),
+         ea_n_inmig=(ea_full_time_employment_n_inmig+ea_part_time_eployment_n_inmig+ea_unemployed_n_inmig),
+         ei_n_inmig=(ei_retired_n_inmig+ei_looking_after_n_inmig+ei_lt_sick_disabled_n_inmig+ei_other_n_inmig)
+         
+         
+         ) %>% 
+  dplyr::select(c("date", "geography", "geography_code",ea_n_samead:ei_n_inmig))
+
+
+
+cats <- c("ea_", "ei_")
+
+for (cat in cats){
+  health_dta <- health_dta %>%
+    mutate( !!paste0(cat,"n_usualres10_") := !!as.name(paste0(cat, "n_samead_")) + !!as.name(paste0(cat,"n_outmig_", cat)) + !!as.name(paste0("n_movedwithin_", cat))) %>%
+    mutate( !!paste0(cat,"n_usualres11_") := !!as.name(paste0("n_samead_", cat)) + !!as.name(paste0("n_inmig_", cat)) + !!as.name(paste0("n_movedwithin_", cat))) %>% 
+    mutate( !!paste0(cat,"n_midyrpop_") := (!!as.name(paste0("n_usualres11_", cat)) + !!as.name(paste0("n_usualres10_", cat))) /2 ) %>%
+    mutate( !!paste0(cat,"netmigration_") := (!!as.name(paste0("n_inmig_", cat)) - !!as.name(paste0("n_outmig_", cat))) / !!as.name(paste0("n_midyrpop_", cat)) * 100)
+  
+}  
+
+
+
+students_dta<-EA_dta %>% 
+  select(contains(c("date", "geography", "geography_code",))
 
 
