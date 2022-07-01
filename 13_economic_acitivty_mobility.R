@@ -202,7 +202,7 @@ tmap_save(map13_4,filepath)
 
 ##Excluded students 
 
-`%notin%` <- Negate(`%in%`)
+# `%notin%` <- Negate(`%in%`)
 
 clean_dta<-EA_dta %>% 
     dplyr::select(!contains (c("and_full_time_student", "including_full_time_students", 
@@ -221,28 +221,34 @@ clean_dta<-clean_dta %>%
   mutate(ea_n_samead=(ea_full_time_employment_n_samead+ea_part_time_eployment_n_samead+ea_unemployed_n_samead),
          ei_n_samead=(ei_retired_n_samead+ei_looking_after_n_samead+ei_lt_sick_disabled_n_samead+ei_other_n_samead),
          ea_n_inmig=(ea_full_time_employment_n_inmig+ea_part_time_eployment_n_inmig+ea_unemployed_n_inmig),
-         ei_n_inmig=(ei_retired_n_inmig+ei_looking_after_n_inmig+ei_lt_sick_disabled_n_inmig+ei_other_n_inmig)
-         
-         
-         ) %>% 
-  dplyr::select(c("date", "geography", "geography_code",ea_n_samead:ei_n_inmig))
+         ei_n_inmig=(ei_retired_n_inmig+ei_looking_after_n_inmig+ei_lt_sick_disabled_n_inmig+ei_other_n_inmig),
+         ea_n_outmig=(ea_full_time_employment_n_outmig+ea_part_time_eployment_n_outmig+ea_unemployed_n_outmig),
+         ei_n_outmig=(ei_retired_n_outmig+ei_looking_after_n_outmig+ei_lt_sick_disabled_n_outmig+ei_other_n_outmig),
+         ea_n_movedwithin=(ea_full_time_employment_n_movedwithin+ea_part_time_eployment_n_movedwithin+ea_unemployed_n_movedwithin),
+         ei_n_movedwithin=(ei_retired_n_movedwithin+ei_looking_after_n_movedwithin+ei_lt_sick_disabled_n_movedwithin+ei_other_n_movedwithin)) %>% 
+  dplyr::select(c("date", "geography", "geography_code",ea_n_samead:ei_n_movedwithin))
 
 
 
 cats <- c("ea_", "ei_")
 
 for (cat in cats){
-  health_dta <- health_dta %>%
-    mutate( !!paste0(cat,"n_usualres10_") := !!as.name(paste0(cat, "n_samead_")) + !!as.name(paste0(cat,"n_outmig_", cat)) + !!as.name(paste0("n_movedwithin_", cat))) %>%
-    mutate( !!paste0(cat,"n_usualres11_") := !!as.name(paste0("n_samead_", cat)) + !!as.name(paste0("n_inmig_", cat)) + !!as.name(paste0("n_movedwithin_", cat))) %>% 
-    mutate( !!paste0(cat,"n_midyrpop_") := (!!as.name(paste0("n_usualres11_", cat)) + !!as.name(paste0("n_usualres10_", cat))) /2 ) %>%
-    mutate( !!paste0(cat,"netmigration_") := (!!as.name(paste0("n_inmig_", cat)) - !!as.name(paste0("n_outmig_", cat))) / !!as.name(paste0("n_midyrpop_", cat)) * 100)
+  clean_dta <- clean_dta %>%
+    mutate( !!paste0(cat,"n_usualres10") := !!as.name(paste0(cat, "n_samead")) + !!as.name(paste0(cat,"n_outmig")) + !!as.name(paste0(cat,"n_movedwithin"))) %>%
+    mutate( !!paste0(cat,"n_usualres11") := !!as.name(paste0(cat,"n_samead")) + !!as.name(paste0(cat,"n_inmig")) + !!as.name(paste0(cat,"n_movedwithin"))) %>% 
+    mutate( !!paste0(cat,"n_midyrpop") := (!!as.name(paste0(cat,"n_usualres11")) + !!as.name(paste0(cat,"n_usualres10"))) /2 ) %>%
+    mutate( !!paste0(cat,"netmigration") := (!!as.name(paste0(cat,"n_inmig")) - !!as.name(paste0(cat,"n_outmig"))) / !!as.name(paste0(cat,"n_midyrpop")) * 100)
   
-}  
-
-
+} 
 
 students_dta<-EA_dta %>% 
-  select(contains(c("date", "geography", "geography_code",))
+  dplyr::select(contains (c("date", "geography", "geography_code", "and_full_time_student", "including_full_time_students"))) %>% 
+  dplyr::select(contains(c("date", "geography", "geography_code", "same_address", "inflow_total_measures","outflow_total_measures", "within_same_area_measures"))) 
+
+grps<-c("ea_full_time_employment", "ea_part_time_eployment", "ea_unemployed", "ei_retired", "ei_looking_after", "ei_lt_sick_disabled", "ei_other")
 
 
+names(students_dta)[4:10]<-paste0(grps,"_n_samead")
+names(students_dta)[11:17]<-paste0(grps,"_n_inmig")
+names(students_dta)[18:24]<-paste0(grps,"_n_outmig")
+names(students_dta)[25:31]<-paste0(grps,"_n_movedwithin")
