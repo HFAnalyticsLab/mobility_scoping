@@ -380,4 +380,71 @@ include_graphics(img1_path)
 
 ```
 
+## Net migration by Health Status (England & Wales) {.tabset}
+
+
+### Limited a lot in daily activities
+```{r echo=FALSE}
+img1_path <- here::here('outputs', "map14_1.png")
+img1 <- readPNG(img1_path, native = TRUE, info = TRUE)
+
+include_graphics(img1_path)
+
+
+```
+
+### Limited a little in daily activities
+```{r echo=FALSE}
+img1_path <- here::here('outputs', "map14_2.png")
+img1 <- readPNG(img1_path, native = TRUE, info = TRUE)
+
+include_graphics(img1_path)
+
+
+```
+
+
+### Not limited in daily activities
+```{r echo=FALSE}
+img1_path <- here::here('outputs', "map14_3.png")
+img1 <- readPNG(img1_path, native = TRUE, info = TRUE)
+
+include_graphics(img1_path)
+
+
+```
+
+
+## Net migration by Health Status (London) {.tabset}
+### Limited a lot in daily activities
+```{r echo=FALSE}
+img1_path <- here::here('outputs', "map14_4.png")
+img1 <- readPNG(img1_path, native = TRUE, info = TRUE)
+
+include_graphics(img1_path)
+
+
+```
+
+### Limited a little in daily activities
+```{r echo=FALSE}
+img1_path <- here::here('outputs', "map14_5.png")
+img1 <- readPNG(img1_path, native = TRUE, info = TRUE)
+
+include_graphics(img1_path)
+
+
+```
+
+
+### Not limited in daily activities
+```{r echo=FALSE}
+img1_path <- here::here('outputs', "map14_6.png")
+img1 <- readPNG(img1_path, native = TRUE, info = TRUE)
+
+include_graphics(img1_path)
+
+
+```
+
 
