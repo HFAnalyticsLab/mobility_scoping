@@ -245,10 +245,177 @@ students_dta<-EA_dta %>%
   dplyr::select(contains (c("date", "geography", "geography_code", "and_full_time_student", "including_full_time_students"))) %>% 
   dplyr::select(contains(c("date", "geography", "geography_code", "same_address", "inflow_total_measures","outflow_total_measures", "within_same_area_measures"))) 
 
-grps<-c("ea_full_time_employment", "ea_part_time_eployment", "ea_unemployed", "ei_retired", "ei_looking_after", "ei_lt_sick_disabled", "ei_other")
+grps<-c("ea_full_time_employment_student", "ea_part_time_employment_student", "ea_unemployed_student", "ei_student")
 
 
-names(students_dta)[4:10]<-paste0(grps,"_n_samead")
-names(students_dta)[11:17]<-paste0(grps,"_n_inmig")
-names(students_dta)[18:24]<-paste0(grps,"_n_outmig")
-names(students_dta)[25:31]<-paste0(grps,"_n_movedwithin")
+names(students_dta)[4:7]<-paste0(grps,"_n_samead")
+names(students_dta)[8:11]<-paste0(grps,"_n_inmig")
+names(students_dta)[12:15]<-paste0(grps,"_n_outmig")
+names(students_dta)[16:19]<-paste0(grps,"_n_movedwithin")
+
+students_dta<-students_dta %>% 
+  mutate(ea_student_n_samead=ea_full_time_employment_student_n_samead+
+           ea_part_time_employment_student_n_samead+ea_unemployed_student_n_samead,
+         ea_student_n_inmig=ea_full_time_employment_student_n_inmig+
+           ea_part_time_employment_student_n_inmig+ea_unemployed_student_n_inmig,
+         ea_student_n_outmig=ea_full_time_employment_student_n_outmig+
+           ea_part_time_employment_student_n_outmig+ea_unemployed_student_n_outmig,
+         ea_student_n_movedwithin=ea_full_time_employment_student_n_movedwithin+
+           ea_part_time_employment_student_n_movedwithin+ea_unemployed_student_n_movedwithin)
+
+
+
+
+cats <- c("ea_student_", "ei_student_")
+
+for (cat in cats){
+  students_dta <- students_dta %>%
+    mutate( !!paste0(cat,"n_usualres10") := !!as.name(paste0(cat, "n_samead")) + !!as.name(paste0(cat,"n_outmig")) + !!as.name(paste0(cat,"n_movedwithin"))) %>%
+    mutate( !!paste0(cat,"n_usualres11") := !!as.name(paste0(cat,"n_samead")) + !!as.name(paste0(cat,"n_inmig")) + !!as.name(paste0(cat,"n_movedwithin"))) %>% 
+    mutate( !!paste0(cat,"n_midyrpop") := (!!as.name(paste0(cat,"n_usualres11")) + !!as.name(paste0(cat,"n_usualres10"))) /2 ) %>%
+    mutate( !!paste0(cat,"netmigration") := (!!as.name(paste0(cat,"n_inmig")) - !!as.name(paste0(cat,"n_outmig"))) / !!as.name(paste0(cat,"n_midyrpop")) * 100)
+  
+} 
+
+students_dta<-students_dta %>% 
+  dplyr::select(c("date", "geography", "geography_code",ea_student_n_samead:ei_student_netmigration))
+
+
+ea_dta<-clean_dta %>% 
+    left_join(students_dta, by=c("date", "geography", "geography_code"))
+
+
+buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
+
+s3write_using(ea_dta # What R object we are saving
+              , FUN = write.csv # Which R function we are using to save
+              , object = 'ea_with_students_net_migration.csv' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above
+
+
+ea_dta_plot<-ea_dta %>% 
+  dplyr::select(contains("netmigration")) %>% 
+  pivot_longer(everything(), names_to="metric", values_to="net_migration")
+
+t<-boxplot(net_migration~metric,data=ea_dta_plot, main="Net Migration by economic activity",
+           xlab="Economic activity", ylab="Net Migration")
+
+#a lot less movement if you exclude students
+
+# recode those <=1% as stable
+ea_dta<-ea_dta %>% 
+  mutate(netmigration_ea_lab=case_when(ea_netmigration < -1 ~ "Negative (greater than 1% of people leaving)",
+                                       ea_netmigration > 1 ~ "Positive (greater than 1% of people moving in)", 
+                                           TRUE ~ "stable migration (~1% of population moving in and out)"),
+         netmigration_ea_student_lab=case_when(ea_student_netmigration < -1 ~ "Negative (greater than 1% of people leaving)",
+                                               ea_student_netmigration> 1 ~ "Positive (greater than 1% of people moving in)", 
+                                           TRUE ~ "stable migration (~1% of population moving in and out)"),
+         netmigration_ei_lab=case_when(ei_netmigration < -1 ~ "Negative (greater than 1% of people leaving)",
+                                       ei_netmigration > 1 ~ "Positive (greather than 1% of people moving in)",
+                                           TRUE ~ "stable migration (~1% of population moving in and out)"),
+         netmigration_ei_student_lab=case_when(ei_student_netmigration < -1 ~ "Negative (greater than 1% of people leaving)",
+                                               ei_student_netmigration > 1 ~ "Positive (greather than 1% of people moving in)",
+                                       TRUE ~ "stable migration (~1% of population moving in and out)"))
+
+
+
+
+# Join spatial data
+msoa_shp <- left_join(msoa_shp,ea_dta , by = c("MSOA11CD" = "geography_code"))
+# geography.code is the MSOA code in the eng_dta df and MSOA11CD the code in the shapefile data
+
+
+#For saving maps 
+buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/outputs' ## my bucket name
+
+
+map13_1 <- tm_shape(msoa_shp) +
+  tm_borders(,alpha=0) +
+  tm_fill(col = "netmigration_ea_lab", palette = "viridis", title = "Economically active (excl. students) Net migration (%)") +
+  tm_layout(legend.title.size = 0.8,
+            legend.text.size = 0.6,
+            legend.position = c("left","top"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+map13_1
+
+map13_2 <- tm_shape(msoa_shp) +
+  tm_borders(,alpha=0) +
+  tm_fill(col = "netmigration_ea_student_lab", palette = "viridis", title = "Economically active (students only) Net migration (%)") +
+  tm_layout(legend.title.size = 0.8,
+            legend.text.size = 0.6,
+            legend.position = c("left","top"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+map13_2
+
+map13_3 <- tm_shape(msoa_shp) +
+  tm_borders(,alpha=0) +
+  tm_fill(col = "netmigration_ei_lab", palette = "viridis", title = "Economically inactive (excl. students) Net migration (%)") +
+  tm_layout(legend.title.size = 0.8,
+            legend.text.size = 0.6,
+            legend.position = c("left","top"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+map13_3
+
+map13_4 <- tm_shape(msoa_shp) +
+  tm_borders(,alpha=0) +
+  tm_fill(col = "netmigration_ei_student_lab", palette = "viridis", title = "Economically inactive (students only) Net migration (%)") +
+  tm_layout(legend.title.size = 0.8,
+            legend.text.size = 0.6,
+            legend.position = c("left","top"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+map13_4
+
+
+# London maps
+ldn_msoa_shp <- msoa_shp %>% 
+  dplyr::filter(, substring(MSOA11CD, 2) < '02000983' & str_detect(MSOA11CD, 'E')) 
+
+
+map13_5 <- tm_shape(ldn_msoa_shp) +
+  tm_borders(,alpha=0) +
+  tm_fill(col = "netmigration_ea_lab", palette = "viridis", title = "Economically active (excl. students) Net migration (%)") +
+  tm_layout(legend.title.size = 0.8,
+            legend.text.size = 0.6,
+            legend.position = c("left","top"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+map13_5
+
+map13_6 <- tm_shape(ldn_msoa_shp) +
+  tm_borders(,alpha=0) +
+  tm_fill(col = "netmigration_ea_student_lab", palette = "viridis", title = "Economically active (students only) Net migration (%)") +
+  tm_layout(legend.title.size = 0.8,
+            legend.text.size = 0.6,
+            legend.position = c("left","top"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+map13_6
+
+
+map13_7 <- tm_shape(ldn_msoa_shp) +
+  tm_borders(,alpha=0) +
+  tm_fill(col = "netmigration_ei_lab", palette = "viridis", title = "Economically inactive (excl. students) Net migration (%)") +
+  tm_layout(legend.title.size = 0.8,
+            legend.text.size = 0.6,
+            legend.position = c("left","top"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+map13_7
+
+map13_8 <- tm_shape(ldn_msoa_shp) +
+  tm_borders(,alpha=0) +
+  tm_fill(col = "netmigration_ei_student_lab", palette = "viridis", title = "Economically inactive (students only) Net migration (%)") +
+  tm_layout(legend.title.size = 0.8,
+            legend.text.size = 0.6,
+            legend.position = c("left","top"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+map13_8
+
+
+
+
