@@ -76,7 +76,7 @@ x65plus<-c("65_64","75p")
 
 
 age_dta <- age_dta %>% 
-  dplyr::select(c("geography", "geography_code", contains(c("same_address", "inmig","outmig", "movedwithin")))) %>% 
+  dplyr::select(c("geography", "geography_code", contains(c("n_samead", "inmig","outmig", "movedwithin")))) %>% 
   rowwise() %>% 
   mutate(under_34_samead=sum(c_across(contains(paste0("n_samead_", under_34)))),
          x35_to_64_samead=sum(c_across(contains(paste0("n_samead_", x35_to_64)))),
@@ -114,6 +114,34 @@ age_dta<-age_dta %>%
   mutate(under_34_netmigration=(under_34_inmig-under_34_outmig)/(under_34_midyearpop)*100,
          x35_to_64_netmigration=(x35_to_64_inmig-x35_to_64_outmig)/(x35_to_64_midyearpop)*100,
          x65plus_netmigration=(x65plus_inmig-x65plus_outmig)/(x65plus_midyearpop)*100)
+
+
+# attempt classification based on Jay's cluster analysis
+# OLD definition
+#age_dta <- age_dta %>%
+ # mutate(age_mig = case_when(
+#              under_34_netmigration <=0 & x35_to_64_netmigration <=0 & x65plus_netmigration <=0 ~ "General outmigration",
+ #             under_34_netmigration >0 & x65plus_netmigration >0 ~ "General inmigration",
+  #            under_34_netmigration >0 & x65plus_netmigration <=0 ~ "Younger inmigration",
+   #           under_34_netmigration <=0 & x65plus_netmigration >0 ~ "Older inmigration",
+    #          under_34_netmigration <=0 & x35_to_64_netmigration >0 ~ "Older inmigration"))
+
+
+# New definition - based on over/under median net migration across LAs
+summ(age_dta$under_34_netmigration) # median 0.465
+summ(age_dta$x35_to_64_netmigration) # median 0.659
+summ(age_dta$x65plus_netmigration) # median 0.159
+
+age_dta <- age_dta %>%
+ mutate(age_mig = case_when(
+              under_34_netmigration <=0.465 & x35_to_64_netmigration <=0.659 & x65plus_netmigration <=0.159 ~ "Below median net migration - all age groups",
+              under_34_netmigration >0.465 & x65plus_netmigration >0.159 ~ "Above median net migration - all age groups",
+              under_34_netmigration >0.465 & x65plus_netmigration <=0.159 ~ "Above median net migration - younger",
+              under_34_netmigration <=0.469 & x65plus_netmigration >0.159 ~ "Above median net migration - older", 
+              under_34_netmigration <=0.469 & x35_to_64_netmigration>0.659 & x65plus_netmigration<0.159 ~ "Above median net migration - middle age only"))
+
+tabyl(age_dta$age_mig)
+
 
 
 # Import Levelling Up data
@@ -175,3 +203,56 @@ s3write_using(tibble # What R object we are saving
               , FUN = write_csv # Which R function we are using to save
               , object = 'outputs/table_netmigration_age_levellingup.csv' # Name of the file to save to (include file type)
               , bucket = buck) # Bucket name defined above
+
+
+
+# load packages
+pacman::p_load(sf,
+               XML,
+               tmap,
+               THFstyle,
+               devtools)
+
+# import shp data
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.shp',
+            file = here::here("shapefiles", "eng.shp"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.cpg',
+            file = here::here("shapefiles", "eng.cpg"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.dbf',
+            file = here::here("shapefiles", "eng.dbf"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.prj',
+            file = here::here("shapefiles", "eng.prj"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.shx',
+            file = here::here("shapefiles", "eng.shx"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.xml',
+            file = here::here("shapefiles", "eng.xml"))
+
+# read LAD boundaries
+lad_shp <- st_read(here::here("shapefiles", "eng.shp"))
+
+str(lad_shp)
+
+# Drop Scotland and Northern Ireland
+lad_shp <- lad_shp %>%
+  subset(str_detect(lad11cd, 'E') | str_detect(lad11cd, 'W'))
+
+
+# Join spatial data
+lad_shp <- left_join(lad_shp, age_dta, by = c("lad11nm" = "geography"))
+
+
+# Map of age migration classification
+map12_1 <- tm_shape(lad_shp) +
+  tm_borders(, alpha=0) +
+  tm_fill(col = "age_mig", style = "cat", palette = "viridis", title = "Mobility category") +
+  tm_layout(legend.title.size = 1,
+            legend.text.size = 0.6,
+            legend.position = c("right","top"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+map12_1
+s3write_using(map7_1 # What R object we are saving
+              , FUN = tmap_save # Which R function we are using to save
+              , object = 'outputs/map7_1_LevUp_priorityareas_London.tiff' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+

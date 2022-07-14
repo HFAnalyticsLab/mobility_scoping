@@ -22,7 +22,9 @@ pacman::p_load(haven,
                aws.s3,
                readr,
                matrixStats,
-               tidyverse)
+               tidyverse, 
+               viridis, 
+               viridisLite)
 
 # import all data
 ## data were downloaded from: https://www.nomisweb.co.uk/census/2011/ukmig005 
@@ -81,6 +83,31 @@ health_dta <- health_dta %>%
 clean_dta<-health_dta %>% 
   dplyr::select(c("date", "geography", "geography_code",contains(c("netmigration"))))
 
+#examine types of areas
+# 7201 MSOAs
+sum(clean_dta$netmigration_limlot <0 & clean_dta$netmigration_limlit <0 & clean_dta$netmigration_notlim <0 , na.rm=TRUE)
+# 905 have outmigration in all health groups
+sum(clean_dta$netmigration_limlot >0 & clean_dta$netmigration_limlit >0 & clean_dta$netmigration_notlim >0 , na.rm=TRUE)
+# 1604 have outmigration in all health groups
+sum(clean_dta$netmigration_limlot <0 & clean_dta$netmigration_limlit <0 & clean_dta$netmigration_notlim >0 , na.rm=TRUE)
+# 1034 have inmig healthy but outmig for both other groups
+sum(clean_dta$netmigration_limlot >0 & clean_dta$netmigration_notlim <0 , na.rm=TRUE)
+# 1034 have inmig unhealthy but outmig for healthy (regardless of what limlit does)
+sum(clean_dta$netmigration_limlot <0 & clean_dta$netmigration_limlit >0  & clean_dta$netmigration_notlim >0 , na.rm=TRUE)
+# 1036 have inmig healthy/limlit but outmig for limlot
+sum(clean_dta$netmigration_limlot >0 & clean_dta$netmigration_limlit <0  & clean_dta$netmigration_notlim >0 , na.rm=TRUE)
+# 663 
+
+
+# classification
+clean_dta <- clean_dta %>%
+  mutate(health_mig = case_when(
+              netmigration_limlot <=0 & netmigration_notlim <=0 ~ "General outmigration",
+              netmigration_limlot >0 & netmigration_notlim >0 ~ "General inmigration",
+              netmigration_limlot >0 & netmigration_notlim <=0 ~ "Inmigration - less healthy",
+              netmigration_limlot <=0 & netmigration_notlim >0 ~ "Inmigration - more healthy"))
+
+tabyl(clean_dta$health_mig)
 
 buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
 
@@ -158,6 +185,17 @@ map13_3 <- tm_shape(msoa_shp) +
             legend.bg.color = "white",
             legend.bg.alpha = 1)
 map13_3
+
+
+map13_4 <- tm_shape(msoa_shp) +
+  tm_borders(,alpha=0) +
+  tm_fill(col = "health_mig",  style = "cat", palette = c('#dd0031', '#53a9cd',  '#744284',  '#ffd412'), title = "Typology of areas - health status of migrants") +
+  tm_layout(legend.title.size = 0.8,
+            legend.text.size = 0.6,
+            legend.position = c("left","top"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+map13_4
 
 
 
