@@ -161,10 +161,6 @@ names(levup)<-str_replace_all(names(levup), c(" " = "." ))
 tabyl(levup$Priority.category, show_missing_levels = T)
 
 
-# replace name for Rhondda so it merges correctly
-levup <- levup %>%
-  mutate(Name = replace(Name, Name == "Rhondda Cynon Taff", "Rhondda Cynon Taf"))
-
 
 # merge data
 age_dta <- left_join(age_dta, levup, by = c("geography" = "Name"))
@@ -236,7 +232,14 @@ str(lad_shp)
 lad_shp <- lad_shp %>%
   subset(str_detect(lad11cd, 'E') | str_detect(lad11cd, 'W'))
 
-
+# replace name for Rhondda so it merges correctly
+  age_dta <- age_dta %>%
+    mutate(geography = replace(geography, geography == "Rhondda Cynon Taff", "Rhondda Cynon Taf"))
+  age_dta <- age_dta %>%
+    mutate(geography = replace(geography, geography == "Folkestone and Hythe", "Shepway"))
+  age_dta <- age_dta %>%
+    mutate(geography = replace(geography, geography == "Vale of Glamorgan", "The Vale of Glamorgan"))
+  
 # Join spatial data
 lad_shp <- left_join(lad_shp, age_dta, by = c("lad11nm" = "geography"))
 
@@ -247,12 +250,12 @@ map12_1 <- tm_shape(lad_shp) +
   tm_fill(col = "age_mig", style = "cat", palette = "viridis", title = "Mobility category") +
   tm_layout(legend.title.size = 1,
             legend.text.size = 0.6,
-            legend.position = c("right","top"),
+            legend.position = c("left","top"),
             legend.bg.color = "white",
             legend.bg.alpha = 1)
 map12_1
-s3write_using(map7_1 # What R object we are saving
+s3write_using(map12_1 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
-              , object = 'outputs/map7_1_LevUp_priorityareas_London.tiff' # Name of the file to save to (include file type)
+              , object = 'outputs/map12_1_age_netmigration.tiff' # Name of the file to save to (include file type)
               , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
 
