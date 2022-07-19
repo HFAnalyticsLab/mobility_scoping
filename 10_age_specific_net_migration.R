@@ -65,7 +65,7 @@ x35_to_64<-c("35_to_49","50_to_64")
 x65plus<-c("65_to_64","75_and_over")
 
 age_dta_clean<-age_dta %>% 
-  select(c("date", "geography", "geography_code", contains(c("same_address", "inflow_total_measures","outflow_total_measures", "within_same_area_measures")))) %>% 
+  dplyr::select(c("date", "geography", "geography_code", contains(c("same_address", "inflow_total_measures","outflow_total_measures", "within_same_area_measures")))) %>% 
   # select(contains(c("inflow_total_measures"))) %>%
   rowwise() %>% 
   mutate(under_34_samead=sum(c_across(contains(paste0("all_persons_age_age_", under_34,"_migration_", "lived_at_same_address")))),
@@ -74,9 +74,9 @@ age_dta_clean<-age_dta %>%
   mutate(under_34_inmig=sum(c_across(contains(paste0("all_persons_age_age_", under_34,"_migration_", "inflow_total_measures")))),
          x35_to_64_inmig=sum(c_across(contains(paste0("all_persons_age_age_", x35_to_64,"_migration_", "inflow_total_measures")))),
          x65plus_inmig=sum(c_across(contains(paste0("all_persons_age_age_", x65plus,"_migration_", "inflow_total_measures"))))) %>% 
-  mutate(under_34_n_movedwithin=sum(c_across(contains(paste0("all_persons_age_age_", under_34,"_migration_", "within_same_area_measures")))),
-         x35_to_64_n_movedwithin=sum(c_across(contains(paste0("all_persons_age_age_", x35_to_64,"_migration_", "within_same_area_measures")))),
-         x65plus_n_movedwithin=sum(c_across(contains(paste0("all_persons_age_age_", x65plus,"_migration_", "within_same_area_measures"))))) %>%
+  mutate(under_34_n_movedwithin=sum(c_across(contains(paste0("all_persons_age_age_", under_34,"_migration_lived_elsewhere_one_year_ago_within_same_area_measures")))),
+         x35_to_64_n_movedwithin=sum(c_across(contains(paste0("all_persons_age_age_", x35_to_64,"_migration_lived_elsewhere_one_year_ago_within_same_area_measures")))),
+         x65plus_n_movedwithin=sum(c_across(contains(paste0("all_persons_age_age_", x65plus,"_migration_lived_elsewhere_one_year_ago_within_same_area_measures"))))) %>%
   mutate(under_34_outmig=sum(c_across(contains(paste0("all_persons_age_age_", under_34,"_migration_", "outflow_total_measures")))),
          x35_to_64_outmig=sum(c_across(contains(paste0("all_persons_age_age_", x35_to_64,"_migration_", "outflow_total_measures")))),
          x65plus_outmig=sum(c_across(contains(paste0("all_persons_age_age_", x65plus,"_migration_", "outflow_total_measures"))))) %>% 
@@ -89,7 +89,7 @@ age_dta_clean<-age_dta %>%
   mutate(under_34_midyearpop=sum((under_34_usualres10+under_34_usualres11)/2),
          x35_to_64_midyearpop=sum((x35_to_64_usualres10+x35_to_64_usualres11)/2),
          x65plus_midyearpop=sum((x65plus_usualres10+x65plus_usualres11)/2)) %>% 
-  select(c("date", "geography", "geography_code",contains(c("under_34","x35_to_64","x65plus"))))
+  dplyr::select(c("date", "geography", "geography_code",contains(c("under_34","x35_to_64","x65plus"))))
 
 
 
@@ -108,7 +108,7 @@ age_dta_clean<-age_dta_clean %>%
 
 
 age_dta_shp<-age_dta_clean %>% 
-  select(c("date", "geography", "geography_code",contains(c("netmigration"))))
+  dplyr::select(c("date", "geography", "geography_code",contains(c("netmigration"))))
 
 #save data
 buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
@@ -123,7 +123,7 @@ summary(age_dta_shp)
 
 
 age_dta_shp_plot<-age_dta_shp %>% 
-  select(under_34_netmigration:x65plus_netmigration) %>% 
+  dplyr::select(under_34_netmigration:x65plus_netmigration) %>% 
   pivot_longer(everything(), names_to="age", values_to="net_migration")
   
 t<-boxplot(net_migration~age,data=age_dta_shp_plot, main="Net Migration by Age",
