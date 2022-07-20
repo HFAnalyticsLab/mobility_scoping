@@ -83,29 +83,45 @@ health_dta <- health_dta %>%
 clean_dta<-health_dta %>% 
   dplyr::select(c("date", "geography", "geography_code",contains(c("netmigration"))))
 
+
+summ(clean_dta$netmigration_limlot) # median net migration 0
+summ(clean_dta$netmigration_limlit) # median net migration 0.157
+summ(clean_dta$netmigration_notlim) # median net migration 0.506
+
+
 #examine types of areas
 # 7201 MSOAs
-sum(clean_dta$netmigration_limlot <0 & clean_dta$netmigration_limlit <0 & clean_dta$netmigration_notlim <0 , na.rm=TRUE)
-# 905 have outmigration in all health groups
-sum(clean_dta$netmigration_limlot >0 & clean_dta$netmigration_limlit >0 & clean_dta$netmigration_notlim >0 , na.rm=TRUE)
-# 1604 have outmigration in all health groups
-sum(clean_dta$netmigration_limlot <0 & clean_dta$netmigration_limlit <0 & clean_dta$netmigration_notlim >0 , na.rm=TRUE)
-# 1034 have inmig healthy but outmig for both other groups
-sum(clean_dta$netmigration_limlot >0 & clean_dta$netmigration_notlim <0 , na.rm=TRUE)
-# 1034 have inmig unhealthy but outmig for healthy (regardless of what limlit does)
-sum(clean_dta$netmigration_limlot <0 & clean_dta$netmigration_limlit >0  & clean_dta$netmigration_notlim >0 , na.rm=TRUE)
-# 1036 have inmig healthy/limlit but outmig for limlot
-sum(clean_dta$netmigration_limlot >0 & clean_dta$netmigration_limlit <0  & clean_dta$netmigration_notlim >0 , na.rm=TRUE)
-# 663 
+sum(clean_dta$netmigration_limlot <0 & clean_dta$netmigration_limlit <0.157 & clean_dta$netmigration_notlim <0.506 , na.rm=TRUE)
+# 1333 have net migration below median in all health groups
+sum(clean_dta$netmigration_limlot >0 & clean_dta$netmigration_limlit >0.157 & clean_dta$netmigration_notlim >0.506 , na.rm=TRUE)
+# 1298 have net migration above median in all health groups
+sum(clean_dta$netmigration_limlot <0 & clean_dta$netmigration_limlit <0.157 & clean_dta$netmigration_notlim >0.506 , na.rm=TRUE)
+# 817 have net migration above median for healthy but net migration below median for both other groups
+sum(clean_dta$netmigration_limlot >0 & clean_dta$netmigration_notlim <0.506 , na.rm=TRUE)
+# 1515 have net migration above median among unhealthy but below median for healthy (regardless of what limlit does)
+sum(clean_dta$netmigration_limlot <0 & clean_dta$netmigration_limlit >0.157  & clean_dta$netmigration_notlim >0.506 , na.rm=TRUE)
+# 810 have net migration above median for healthy/limlit but below median for limlot
+sum(clean_dta$netmigration_limlot >0 & clean_dta$netmigration_limlit <0.157  & clean_dta$netmigration_notlim >0.506 , na.rm=TRUE)
+# 569
+
+
+# binary variables for above/below median
+clean_dta <- clean_dta %>%
+  mutate(above_median_limlot = case_when(netmigration_limlot<=0 ~ 0,
+                   TRUE ~ 1), 
+         above_median_limlit = case_when(netmigration_limlit<=0.157 ~ 0,
+                    TRUE ~1),
+         above_median_notlim = case_when(netmigration_notlim<=0.506 ~ 0,
+                    TRUE ~ 1))
 
 
 # classification
 clean_dta <- clean_dta %>%
   mutate(health_mig = case_when(
-              netmigration_limlot <=0 & netmigration_notlim <=0 ~ "General outmigration",
-              netmigration_limlot >0 & netmigration_notlim >0 ~ "General inmigration",
-              netmigration_limlot >0 & netmigration_notlim <=0 ~ "Inmigration - less healthy",
-              netmigration_limlot <=0 & netmigration_notlim >0 ~ "Inmigration - more healthy"))
+              netmigration_limlot <=0 & netmigration_notlim <=0.506 ~ "Net migration below median for all health groups",
+              netmigration_limlot >0 & netmigration_notlim >0.506 ~ "Net migration above median for all health groups",
+              netmigration_limlot >0 & netmigration_notlim <=0.506 ~ "Net migration above median - less healthy",
+              netmigration_limlot <=0 & netmigration_notlim >0.506 ~ "Net migration above median - more healthy"))
 
 tabyl(clean_dta$health_mig)
 
@@ -129,19 +145,6 @@ summ(clean_dta$netmigration_limlit)
 summ(clean_dta$netmigration_notlim)
 
 
-# recode those <=1% as stable
-clean_dta<-clean_dta %>% 
-  mutate(netmigration_limlot_lab=case_when(netmigration_limlot < -1 ~ "Negative (greater than 1% of people leaving)",
-                                           netmigration_limlot > 1 ~ "Positive (greater than 1% of people moving in)", 
-                                                          TRUE ~ "stable migration (~1% of population moving in and out)"),
-         netmigration_limlit_lab=case_when(netmigration_limlit < -1 ~ "Negative (greater than 1% of people leaving)",
-                                           netmigration_limlit> 1 ~ "Positive (greater than 1% of people moving in)", 
-                                                        TRUE ~ "stable migration (~1% of population moving in and out)"),
-         netmigration_notlim_lab=case_when(netmigration_notlim < -1 ~ "Negative (greater than 1% of people leaving)",
-                                           netmigration_notlim > 1 ~ "Positive (greather than 1% of people moving in)",
-                                                        TRUE ~ "stable migration (~1% of population moving in and out)"))
-
-
 # Join spatial data
 msoa_shp <- left_join(msoa_shp,clean_dta , by = c("MSOA11CD" = "geography_code"))
 # geography.code is the MSOA code in the eng_dta df and MSOA11CD the code in the shapefile data
@@ -151,10 +154,9 @@ msoa_shp <- left_join(msoa_shp,clean_dta , by = c("MSOA11CD" = "geography_code")
 buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/outputs' ## my bucket name
 
 
-
 map13_1 <- tm_shape(msoa_shp) +
   tm_borders(,alpha=0) +
-  tm_fill(col = "netmigration_limlot_lab", palette = "viridis", title = "Limited a lot in daily activities Net migration (%)") +
+  tm_fill(col = "above_median_limlot",  style = "cat", palette = "viridis", title = "Net migration above/below median for people whose daily activities are limited a lot") +
   tm_layout(legend.title.size = 0.8,
             legend.text.size = 0.6,
             legend.position = c("left","top"),
@@ -162,11 +164,9 @@ map13_1 <- tm_shape(msoa_shp) +
             legend.bg.alpha = 1)
 map13_1
 
-
-
 map13_2 <- tm_shape(msoa_shp) +
   tm_borders(,alpha=0) +
-  tm_fill(col = "netmigration_limlit_lab", palette = "viridis", title = "Limited a little in daily activities Net migration (%)") +
+  tm_fill(col = "above_median_limlit",  style = "cat", palette = "viridis", title = "Net migration above/below median for people whose daily activities are limited a lot") +
   tm_layout(legend.title.size = 0.8,
             legend.text.size = 0.6,
             legend.position = c("left","top"),
@@ -175,10 +175,9 @@ map13_2 <- tm_shape(msoa_shp) +
 map13_2
 
 
-
 map13_3 <- tm_shape(msoa_shp) +
   tm_borders(,alpha=0) +
-  tm_fill(col = "netmigration_notlim_lab", palette = "viridis", title = "Not limited in daily activities Net migration (%)") +
+  tm_fill(col = "above_median_notlim",  style = "cat", palette = "viridis", title = "Net migration above/below median for people whose daily activities are limited a lot") +
   tm_layout(legend.title.size = 0.8,
             legend.text.size = 0.6,
             legend.position = c("left","top"),
@@ -204,22 +203,9 @@ ldn_msoa_shp <- msoa_shp %>%
   dplyr::filter(, substring(MSOA11CD, 2) < '02000983' & str_detect(MSOA11CD, 'E')) 
 
 
-map13_4<- tm_shape(ldn_msoa_shp) +
-  tm_borders(,alpha=0) +
-  tm_fill(col = "netmigration_limlot_lab", palette = "viridis", title = "Limited a lot in daily activities Net migration (%)") +
-  tm_layout(legend.title.size = 0.8,
-            legend.text.size = 0.6,
-            legend.position = c("left","top"),
-            legend.bg.color = "white",
-            legend.bg.alpha = 1)
-
-map13_4
-
-
-
 map13_5<- tm_shape(ldn_msoa_shp) +
   tm_borders(,alpha=0) +
-  tm_fill(col = "netmigration_limlit_lab", palette = "viridis", title = "Limited a little in daily activities Net migration (%)") +
+  tm_fill(col = "above_median_limlot", palette = "viridis", title = "Limited a lot in daily activities Net migration (%)") +
   tm_layout(legend.title.size = 0.8,
             legend.text.size = 0.6,
             legend.position = c("left","top"),
@@ -230,10 +216,9 @@ map13_5
 
 
 
-
 map13_6<- tm_shape(ldn_msoa_shp) +
   tm_borders(,alpha=0) +
-  tm_fill(col = "netmigration_notlim_lab", palette = "viridis", title = "Not limited in daily activities Net migration (%)") +
+  tm_fill(col = "above_median_limlit", palette = "viridis", title = "Limited a little in daily activities Net migration (%)") +
   tm_layout(legend.title.size = 0.8,
             legend.text.size = 0.6,
             legend.position = c("left","top"),
@@ -242,3 +227,29 @@ map13_6<- tm_shape(ldn_msoa_shp) +
 
 map13_6
 
+
+
+
+map13_7<- tm_shape(ldn_msoa_shp) +
+  tm_borders(,alpha=0) +
+  tm_fill(col = "above_median_notlim", palette = "viridis", title = "Not limited in daily activities Net migration (%)") +
+  tm_layout(legend.title.size = 0.8,
+            legend.text.size = 0.6,
+            legend.position = c("left","top"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+
+map13_7
+
+
+
+map13_8<- tm_shape(ldn_msoa_shp) +
+  tm_borders(,alpha=0) +
+  tm_fill(col = "health_mig", palette = "viridis", title = "Not limited in daily activities Net migration (%)") +
+  tm_layout(legend.title.size = 0.8,
+            legend.text.size = 0.6,
+            legend.position = c("left","top"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+
+map13_8
