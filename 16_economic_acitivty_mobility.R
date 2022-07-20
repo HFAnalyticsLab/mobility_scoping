@@ -435,6 +435,10 @@ eng_dta<-eng_dta %>%
   summarise_if(is.numeric, sum, na.rm = TRUE) %>% 
   dplyr::select(-date)
 
+#Check it doesn't have Northern Ireland or Scotland
+eng_dta %>% 
+  filter(str_detect(LAD11CD, "N")| str_detect(LAD11CD, "S"))
+
 cats <- c("ea_student_", "ei_student_", "ei_", "ea_")
 
 for (cat in cats){
@@ -450,5 +454,100 @@ s3write_using(eng_dta # What R object we are saving
               , FUN = write.csv # Which R function we are using to save
               , object = 'ea_with_students_net_migration_LAD.csv' # Name of the file to save to (include file type)
               , bucket = buck) # Bucket name defined above
+
+
+
+# New definition - based on over/under median net migration across LAs
+eng_dta %>% 
+  select(contains("netmigration")) %>% 
+  tbl_summary(digits=everything()~3) #default is median (25%,75%) 
+
+summ(eng_dta$ea_netmigration)
+summ(eng_dta$ei_netmigration)
+summ(eng_dta$ea_student_netmigration)
+summ(eng_dta$ei_student_netmigration)
+
+##the median of ei student and ea student is pretty much the same 
+##the spread looks most similar for students so will just combine theme
+
+eng_dta<-eng_dta %>% 
+  mutate(student_n_samead=ei_student_n_samead+ea_student_n_samead,
+         student_n_inmig=ei_student_n_inmig+ea_student_n_inmig,
+         student_n_outmig=ei_student_n_outmig+ea_student_n_outmig,
+         student_n_movedwithin=ei_student_n_movedwithin+ea_student_n_movedwithin,
+         student_n_usualres10=student_n_samead+student_n_movedwithin+student_n_outmig,
+         student_n_usualres11=student_n_samead+student_n_inmig+student_n_movedwithin,
+         student_n_midyearpop=(student_n_usualres10+student_n_usualres11)/2,
+         student_netmigration=((student_n_inmig-student_n_outmig)/student_n_midyearpop)*100)
+
+
+eng_dta %>% 
+  select(contains("netmigration")) %>% 
+  tbl_summary(digits=everything()~3) #default is median (25%,75%) 
+
+summ(eng_dta$ea_netmigration)
+summ(eng_dta$ei_netmigration)
+summ(eng_dta$ea_student_netmigration)
+summ(eng_dta$ei_student_netmigration)
+summ(eng_dta$student_netmigration)
+
+
+eng_dta <- eng_dta %>%
+  mutate(EA_mig = case_when(
+    ea_netmigration <=1.016 & ei_netmigration <=0.574 & student_netmigration <=-7.243 ~ "Below median net migration - all groups",
+    ea_netmigration >1.016 & ei_netmigration >0.574 &student_netmigration> -7.243 ~ "Above median net migration - all groups",
+    ea_netmigration >0.465 & ei_netmigration <=0.574 &student_netmigration<= -7.243~ "Above median net migration - Economically active",
+    ea_netmigration <=0.465 & ei_netmigration >0.574 &student_netmigration<= -7.243 ~ "Above median net migration - Economically inactive", 
+    ea_netmigration <=0.465 & ei_netmigration <=0.574 &student_netmigration> -7.243 ~ "Above median net migration - Students"))
+
+
+
+
+age_dta <- age_dta %>%
+  mutate(age_mig = case_when(
+    under_34_netmigration <=0.465 & x35_to_64_netmigration <=0.659 & x65plus_netmigration <=0.159 ~ "Below median net migration - all age groups",
+    under_34_netmigration >0.465 & x65plus_netmigration >0.159 ~ "Above median net migration - all age groups",
+    under_34_netmigration >0.465 & x65plus_netmigration <=0.159 ~ "Above median net migration - younger",
+    under_34_netmigration <=0.465 & x65plus_netmigration >0.159 ~ "Above median net migration - older", 
+    under_34_netmigration <=0.465 & x35_to_64_netmigration>0.659 & x65plus_netmigration<0.159 ~ "Above median net migration - middle age only"))
+
+
+
+tabyl(eng_dta$EA_mig)
+
+
+
+
+
+
+
+
+# Maps for LAD level ------------------------------------------------------
+
+# import shp data
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.shp',
+            file = here::here("shapefiles", "eng.shp"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.cpg',
+            file = here::here("shapefiles", "eng.cpg"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.dbf',
+            file = here::here("shapefiles", "eng.dbf")) 
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.prj',
+            file = here::here("shapefiles", "eng.prj"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.shx',
+            file = here::here("shapefiles", "eng.shx"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.xml',
+            file = here::here("shapefiles", "eng.xml"))
+
+# read LAD boundaries
+lad_shp <- st_read(here::here("shapefiles", "eng.shp"))
+
+str(lad_shp)
+
+# Drop Scotland and Northern Ireland
+lad_shp <- lad_shp %>%
+  subset(str_detect(lad11cd, 'E') | str_detect(lad11cd, 'W'))
+
+# Join spatial data
+lad_shp <- left_join(lad_shp, eng_dta, by = c("lad11cd" = "LAD11CD"))
 
 
