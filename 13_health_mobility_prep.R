@@ -177,7 +177,7 @@ map13_2
 
 map13_3 <- tm_shape(msoa_shp) +
   tm_borders(,alpha=0) +
-  tm_fill(col = "above_median_limlit",  style = "cat", palette = "viridis", title = "Net migration above/below median for people whose daily activities are limited a lot") +
+  tm_fill(col = "above_median_notlim",  style = "cat", palette = "viridis", title = "Net migration above/below median for people whose daily activities are limited a lot") +
   tm_layout(legend.title.size = 0.8,
             legend.text.size = 0.6,
             legend.position = c("left","top"),
