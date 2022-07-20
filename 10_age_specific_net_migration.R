@@ -26,7 +26,7 @@ pacman::p_load(sf,
 # 
 
 
-## data were downloaded from: https://www.nomisweb.co.uk/census/2011/ukmig008
+## data were downloaded from: https://www.nomisweb.co.uk/census/2011/ukmig001
 age_dta <- s3read_using(import, 
                         object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/migration_age_sex.csv') # File to open 
 
