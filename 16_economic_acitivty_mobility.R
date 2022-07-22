@@ -498,8 +498,7 @@ eng_dta <- eng_dta %>%
     ea_netmigration >1.016 & ei_netmigration >0.574 &student_netmigration> -7.243 ~ "Above median net migration - all groups",
     ea_netmigration >1.016 & ei_netmigration <=0.574 &student_netmigration<= -7.243~ "Above median net migration - Economically active",
     ea_netmigration <=1.016 & ei_netmigration >0.574 &student_netmigration<= -7.243 ~ "Above median net migration - Economically inactive", 
-    ea_netmigration <=1.016 & ei_netmigration <=0.574 &student_netmigration> -7.243 ~ "Above median net migration - Students",
-    ea_netmigration >=1.016 & ei_netmigration >=0.574 &student_netmigration>= -7.243 ~ "Above median net migration - all groups"))
+    ea_netmigration <=1.016 & ei_netmigration <=0.574 &student_netmigration> -7.243 ~ "Above median net migration - Students"))
 
 tabyl(eng_dta$EA_mig)
 
