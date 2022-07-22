@@ -36,6 +36,12 @@ age_dta<-age_dta %>%
   clean_names() 
 #remove spaces so that we can refer to column names in functions]
 
+# Drop Scotland and NI
+age_dta <- age_dta %>%
+  subset(str_detect(geography_code, '^E') | str_detect(geography_code, '^W'))
+
+dim(age_dta)      #43 variables, 348 observations
+
 
 # naming second column x until figured out what it  means
 names(age_dta)[4:10]<-c('n_samead', 'n_movedwithin' , 'n_inmig','x','y','z','n_outmig')
@@ -143,6 +149,17 @@ age_dta <- age_dta %>%
 tabyl(age_dta$age_mig)
 
 
+# Save data
+clean_dta<-age_dta %>% 
+  dplyr::select(c("geography", "geography_code",contains(c("netmigration")), "age_mig"))
+
+buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
+
+s3write_using(age_dta # What R object we are saving
+              , FUN = write.csv # Which R function we are using to save
+              , object = 'age_net_migration_LA.csv' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above
+
 
 # Import Levelling Up data
 buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping' ## my bucket name
@@ -247,7 +264,7 @@ lad_shp <- left_join(lad_shp, age_dta, by = c("lad11nm" = "geography"))
 # Map of age migration classification
 map12_1 <- tm_shape(lad_shp) +
   tm_borders(, alpha=0) +
-  tm_fill(col = "age_mig", style = "cat", palette = "viridis", title = "Mobility category") +
+  tm_fill(col = "age_mig", style = "cat", palette = "viridis", title = "Mobility by age") +
   tm_layout(legend.title.size = 1,
             legend.text.size = 0.6,
             legend.position = c("left","top"),
