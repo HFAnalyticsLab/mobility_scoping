@@ -498,25 +498,13 @@ eng_dta <- eng_dta %>%
     ea_netmigration >1.016 & ei_netmigration >0.574 &student_netmigration> -7.243 ~ "Above median net migration - all groups",
     ea_netmigration >0.465 & ei_netmigration <=0.574 &student_netmigration<= -7.243~ "Above median net migration - Economically active",
     ea_netmigration <=0.465 & ei_netmigration >0.574 &student_netmigration<= -7.243 ~ "Above median net migration - Economically inactive", 
-    ea_netmigration <=0.465 & ei_netmigration <=0.574 &student_netmigration> -7.243 ~ "Above median net migration - Students"))
-
-
-
-
-age_dta <- age_dta %>%
-  mutate(age_mig = case_when(
-    under_34_netmigration <=0.465 & x35_to_64_netmigration <=0.659 & x65plus_netmigration <=0.159 ~ "Below median net migration - all age groups",
-    under_34_netmigration >0.465 & x65plus_netmigration >0.159 ~ "Above median net migration - all age groups",
-    under_34_netmigration >0.465 & x65plus_netmigration <=0.159 ~ "Above median net migration - younger",
-    under_34_netmigration <=0.465 & x65plus_netmigration >0.159 ~ "Above median net migration - older", 
-    under_34_netmigration <=0.465 & x35_to_64_netmigration>0.659 & x65plus_netmigration<0.159 ~ "Above median net migration - middle age only"))
-
-
+    ea_netmigration <=0.465 & ei_netmigration <=0.574 &student_netmigration> -7.243 ~ "Above median net migration - Students",
+    ea_netmigration >=0.465 & ei_netmigration >=0.574 &student_netmigration>= -7.243 ~ "Above median net migration - Students"))
 
 tabyl(eng_dta$EA_mig)
 
 
-
+write.csv(eng_dta, "eng_dta.csv")
 
 
 
