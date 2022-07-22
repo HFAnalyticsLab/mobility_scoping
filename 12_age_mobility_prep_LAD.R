@@ -143,8 +143,8 @@ age_dta <- age_dta %>%
               under_34_netmigration <=0.465 & x35_to_64_netmigration <=0.659 & x65plus_netmigration <=0.159 ~ "Below median net migration - all age groups",
               under_34_netmigration >0.465 & x65plus_netmigration >0.159 ~ "Above median net migration - all age groups",
               under_34_netmigration >0.465 & x65plus_netmigration <=0.159 ~ "Above median net migration - younger",
-              under_34_netmigration <=0.469 & x65plus_netmigration >0.159 ~ "Above median net migration - older", 
-              under_34_netmigration <=0.469 & x35_to_64_netmigration>0.659 & x65plus_netmigration<0.159 ~ "Above median net migration - middle age only"))
+              under_34_netmigration <=0.465 & x65plus_netmigration >0.159 ~ "Above median net migration - older", 
+              under_34_netmigration <=0.465 & x35_to_64_netmigration>0.659 & x65plus_netmigration<0.159 ~ "Above median net migration - middle age only"))
 
 tabyl(age_dta$age_mig)
 
