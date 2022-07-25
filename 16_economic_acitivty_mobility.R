@@ -227,8 +227,6 @@ clean_dta<-clean_dta %>%
          ei_n_movedwithin=(ei_retired_n_movedwithin+ei_looking_after_n_movedwithin+ei_lt_sick_disabled_n_movedwithin+ei_other_n_movedwithin)) %>% 
   dplyr::select(c("date", "geography", "geography_code",ea_n_samead:ei_n_movedwithin))
 
-
-
 cats <- c("ea_", "ei_")
 
 for (cat in cats){
@@ -496,12 +494,12 @@ eng_dta <- eng_dta %>%
   mutate(EA_mig = case_when(
     ea_netmigration <=1.016 & ei_netmigration <=0.574 & student_netmigration <=-7.243 ~ "Below median net migration - all groups",
     ea_netmigration >1.016 & ei_netmigration >0.574 &student_netmigration> -7.243 ~ "Above median net migration - all groups",
-    ea_netmigration >1.016 & ei_netmigration <=0.574 &student_netmigration<= -7.243~ "Above median net migration - Economically active only",
-    ea_netmigration <=1.016 & ei_netmigration >0.574 &student_netmigration<= -7.243 ~ "Above median net migration - Economically inactive only", 
-    ea_netmigration <=1.016 & ei_netmigration <=0.574 &student_netmigration> -7.243 ~ "Above median net migration - Students only",
-    ea_netmigration >1.016 & ei_netmigration <=0.574 &student_netmigration> -7.243 ~ "Above median net migration - Economically active and students", 
-    ea_netmigration <=1.016 & ei_netmigration >0.574 &student_netmigration> -7.243 ~ "Above median net migration - Economically inactive and students",
-    ea_netmigration >1.016 & ei_netmigration >0.574 &student_netmigration<= -7.243 ~ "Above median net migration - Economically active and inactive"))
+    ea_netmigration >1.016 & ei_netmigration <=0.574 &student_netmigration<= -7.243~ "Above median net migration - Economically active",
+    ea_netmigration <=1.016 & ei_netmigration >0.574 &student_netmigration<= -7.243 ~ "Above median net migration - Economically inactive", 
+    ea_netmigration <=1.016 & ei_netmigration <=0.574 &student_netmigration> -7.243 ~ "Above median net migration - Students",
+    ea_netmigration <=1.016 & ei_netmigration >0.574 &student_netmigration> -7.243 ~ "Below median net migration - Economically active only",
+    ea_netmigration >1.016 & ei_netmigration <=0.574 &student_netmigration> -7.243 ~ "Below median net migration - Economically inactive only",
+    ea_netmigration >1.016 & ei_netmigration >0.574 &student_netmigration<= -7.243 ~ "Below median net migration - Students only"))
 
 tabyl(eng_dta$EA_mig)
 
@@ -509,8 +507,16 @@ tabyl(eng_dta$EA_mig)
 write.csv(eng_dta, "eng_dta.csv")
 
 
+eng_dta2 <- eng_dta %>%
+  mutate(EA_mig = case_when(
+    ea_netmigration <=1.016 & ei_netmigration >0.574 ~ "Above median net migration for Economically inactive but below Economically active", 
+    ea_netmigration>1.016 & ei_netmigration <=0.574 ~ "Above median net migration for Economically active but below Economically inactive",
+    student_netmigration> -7.243 & ea_netmigration<1.016 ~ "Above median net migration students but below for economically active",
+    student_netmigration<= -7.243&ea_netmigration>1.016  ~ "Below median net migration students and economically active"))
 
+tabyl(eng_dta2$EA_mig)
 
+write.csv(eng_dta2, "eng_dta2.csv")
 
 # Maps for LAD level ------------------------------------------------------
 
