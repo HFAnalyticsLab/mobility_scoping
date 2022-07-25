@@ -163,6 +163,63 @@ t<-boxplot(net_migration~metric,data=ea_dta_plot, main="Net Migration by Health 
 
 
 
+# Import Levelling Up data
+buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping' ## my bucket name
+
+levup <-s3read_using(import # Which function are we using to read
+                     , object = 'data/Levelling_Up_priority_areas/Levelling_Up_Fund_list_of_local_authorities_by_priority_category.xlsx' # File to open
+                     , bucket = buck) # Bucket name defined above
+
+
+dim(levup)
+# 368 LAs in file
+
+# tidy column names
+names(levup)<-str_replace_all(names(levup), c(" " = "." ))
+
+tabyl(levup$Priority.category, show_missing_levels = T)
+
+
+
+# merge data
+clean_dta <- left_join(clean_dta, levup, by = c("geography" = "Name"))
+
+
+# calculate net migration by age and by Levelling Up category
+summary(subset(clean_dta, Priority.category == 1 & Country == 'England')$netmigration_limlot)
+summary(subset(clean_dta, Priority.category == 2 & Country == 'England')$netmigration_limlot)
+summary(subset(clean_dta, Priority.category == 3 & Country == 'England')$netmigration_limlot)
+
+summary(subset(clean_dta, Priority.category == 1 & Country == 'England')$netmigration_limlit)
+summary(subset(clean_dta, Priority.category == 2 & Country == 'England')$netmigration_limlit)
+summary(subset(clean_dta, Priority.category == 3 & Country == 'England')$netmigration_limlit)
+
+summary(subset(clean_dta, Priority.category == 1 & Country == 'England')$netmigration_notlim)
+summary(subset(clean_dta, Priority.category == 2 & Country == 'England')$netmigration_notlim)
+summary(subset(clean_dta, Priority.category == 3 & Country == 'England')$netmigration_notlim)
+
+
+tibble_health <- clean_dta %>%
+  dplyr::filter(Country == 'England') %>%
+  group_by(levelling_up_priority = Priority.category) %>%
+  summarise(med_netmigration_limlot = median(netmigration_limlot),
+            q1_limlot = quantile(netmigration_limlot, 0.25),
+            q3_limlot = quantile(netmigration_limlot, 0.75),
+            med_netmigration_limlit = median(netmigration_limlit), 
+            q1_limlit = quantile(netmigration_limlit, 0.25),
+            q3_limlit = quantile(netmigration_limlit, 0.75),
+            med_netmigration_notlim = median(netmigration_notlim),
+            q1_notlim = quantile(netmigration_notlim, 0.25),
+            q3_notlim = quantile(netmigration_notlim, 0.75))
+tibble_health
+options(pillar.sigfig=3) # controls number of digits displayed, couldn't figure out how to limit to 2 decimal places in csv below
+
+s3write_using(tibble_health # What R object we are saving
+              , FUN = write_csv # Which R function we are using to save
+              , object = 'outputs/table_netmigration_health_levellingup.csv' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above
+
+
 # Join spatial data
 lad_shp <- left_join(lad_shp,clean_dta , by = c("lad11nm" = "geography"))
 # geography.code is the LAD code in the eng_dta df and lad11cd the code in the shapefile data
@@ -209,7 +266,7 @@ map15_3
 
 map15_4 <- tm_shape(lad_shp) +
   tm_borders(,alpha=0) +
-  tm_fill(col = "health_mig",  style = "cat", palette = c('#dd0031', '#53a9cd',  '#744284',  '#ffd412'), title = "Typology of areas - health status of migrants") +
+  tm_fill(col = "health_mig",  style = "cat", palette = "viridis", title = "Mobility by health status") +
   tm_layout(legend.title.size = 0.8,
             legend.text.size = 0.6,
             legend.position = c("left","top"),

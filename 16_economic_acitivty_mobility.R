@@ -496,10 +496,12 @@ eng_dta <- eng_dta %>%
   mutate(EA_mig = case_when(
     ea_netmigration <=1.016 & ei_netmigration <=0.574 & student_netmigration <=-7.243 ~ "Below median net migration - all groups",
     ea_netmigration >1.016 & ei_netmigration >0.574 &student_netmigration> -7.243 ~ "Above median net migration - all groups",
-    ea_netmigration >1.016 & ei_netmigration <=0.574 &student_netmigration<= -7.243~ "Above median net migration - Economically active",
-    ea_netmigration <=1.016 & ei_netmigration >0.574 &student_netmigration<= -7.243 ~ "Above median net migration - Economically inactive", 
-    ea_netmigration <=1.016 & ei_netmigration <=0.574 &student_netmigration> -7.243 ~ "Above median net migration - Students",
-    ea_netmigration >=1.016 & ei_netmigration >=0.574 &student_netmigration>= -7.243 ~ "Above median net migration - all groups"))
+    ea_netmigration >1.016 & ei_netmigration <=0.574 &student_netmigration<= -7.243~ "Above median net migration - Economically active only",
+    ea_netmigration <=1.016 & ei_netmigration >0.574 &student_netmigration<= -7.243 ~ "Above median net migration - Economically inactive only", 
+    ea_netmigration <=1.016 & ei_netmigration <=0.574 &student_netmigration> -7.243 ~ "Above median net migration - Students only",
+    ea_netmigration >1.016 & ei_netmigration <=0.574 &student_netmigration> -7.243 ~ "Above median net migration - Economically active and students", 
+    ea_netmigration <=1.016 & ei_netmigration >0.574 &student_netmigration> -7.243 ~ "Above median net migration - Economically inactive and students",
+    ea_netmigration >1.016 & ei_netmigration >0.574 &student_netmigration<= -7.243 ~ "Above median net migration - Economically active and inactive"))
 
 tabyl(eng_dta$EA_mig)
 
