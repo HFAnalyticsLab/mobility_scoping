@@ -547,3 +547,15 @@ lad_shp <- lad_shp %>%
 lad_shp <- left_join(lad_shp, eng_dta, by = c("lad11cd" = "LAD11CD"))
 
 
+
+# Map of age migration classification
+map16_1 <- tm_shape(lad_shp) +
+  tm_borders(, alpha=0) +
+  tm_fill(col = "EA_mig", style = "cat", palette = "viridis", title = "Mobility by age") +
+  tm_layout(legend.title.size = 1,
+            legend.text.size = 0.6,
+            legend.position = c("left","top"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+map16_1
+

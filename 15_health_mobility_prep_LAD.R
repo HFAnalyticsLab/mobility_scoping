@@ -220,6 +220,72 @@ s3write_using(tibble_health # What R object we are saving
               , bucket = buck) # Bucket name defined above
 
 
+# Import IMD data
+buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping' ## my bucket name
+
+imd <-s3read_using(import # Which function are we using to read
+                   , object = 'data/IMD_LAD.xlsx' # File to open
+                   , bucket = buck) # Bucket name defined above
+# Source: https://www.gov.uk/government/statistics/english-indices-of-deprivation-2019
+
+
+dim(imd)
+# 317 LAs in file
+
+# tidy column names
+imd<-imd %>% 
+  clean_names() 
+
+imd <- imd %>%
+  dplyr::select("local_authority_district_name_2019", "imd_rank_of_average_rank")
+
+tabyl(imd$imd_rank_of_average_rank, show_missing_levels = T)
+
+# Make a variable to identify top and bottom quintile of LAs
+imd <- imd %>%
+  mutate(quintile = cut(imd_rank_of_average_rank,
+                        breaks = quantile(imd_rank_of_average_rank, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1, NA)),
+                        labels = 1:5, na.rm = TRUE))
+
+# merge data
+clean_dta <- left_join(clean_dta, imd, by = c("geography" = "local_authority_district_name_2019"))
+
+
+
+# calculate net migration by age for top and bottom IMD quintiles
+summary(subset(clean_dta, quintile == 1 & Country == 'England')$netmigration_limlot)
+summary(subset(clean_dta, quintile == 5 & Country == 'England')$netmigration_limlot)
+
+summary(subset(clean_dta, quintile == 1 & Country == 'England')$netmigration_limlit)
+summary(subset(clean_dta, quintile == 5 & Country == 'England')$netmigration_limlit)
+
+summary(subset(clean_dta, quintile == 1 & Country == 'England')$netmigration_notlim)
+summary(subset(clean_dta, quintile == 5 & Country == 'England')$netmigration_notlim)
+
+
+tibble_health2 <- clean_dta %>%
+  dplyr::filter(Country == 'England') %>%
+  group_by(quintile = quintile) %>%
+  summarise(med_netmigration_limlot = median(netmigration_limlot),
+            q1_limlot = quantile(netmigration_limlot, 0.25),
+            q3_limlot = quantile(netmigration_limlot, 0.75),
+            med_netmigration_limlit = median(netmigration_limlit), 
+            q1_limlit = quantile(netmigration_limlit, 0.25),
+            q3_limlit = quantile(netmigration_limlit, 0.75),
+            med_netmigration_notlim = median(netmigration_notlim),
+            q1_notlim = quantile(netmigration_notlim, 0.25),
+            q3_notlim = quantile(netmigration_notlim, 0.75))
+tibble_health2
+options(pillar.sigfig=3) # controls number of digits displayed, couldn't figure out how to limit to 2 decimal places in csv below
+
+s3write_using(tibble_health2 # What R object we are saving
+              , FUN = write_csv # Which R function we are using to save
+              , object = 'outputs/table_netmigration_health_imd.csv' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above
+
+
+
+
 # Join spatial data
 lad_shp <- left_join(lad_shp,clean_dta , by = c("lad11nm" = "geography"))
 # geography.code is the LAD code in the eng_dta df and lad11cd the code in the shapefile data
@@ -332,3 +398,4 @@ map15_8<- tm_shape(ldn_lad_shp) +
             legend.bg.alpha = 1)
 
 map15_8
+

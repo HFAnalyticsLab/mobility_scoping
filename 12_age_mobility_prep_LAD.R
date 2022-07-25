@@ -197,7 +197,7 @@ summary(subset(age_dta, Priority.category == 2 & Country == 'England')$x65plus_n
 summary(subset(age_dta, Priority.category == 3 & Country == 'England')$x65plus_netmigration)
 
 
-tibble <- age_dta %>%
+tibble_age1 <- age_dta %>%
   dplyr::filter(Country == 'England') %>%
   group_by(levelling_up_priority = Priority.category) %>%
   summarise(med_netmigration_under34 = median(under_34_netmigration),
@@ -209,12 +209,82 @@ tibble <- age_dta %>%
             med_netmigration_65plus = median(x65plus_netmigration),
             q1_65plus = quantile(x65plus_netmigration, 0.25),
             q3_65plus = quantile(x65plus_netmigration, 0.75))
-tibble
+tibble_age1
 options(pillar.sigfig=3) # controls number of digits displayed, couldn't figure out how to limit to 2 decimal places in csv below
 
-s3write_using(tibble # What R object we are saving
+s3write_using(tibble_age1 # What R object we are saving
               , FUN = write_csv # Which R function we are using to save
               , object = 'outputs/table_netmigration_age_levellingup.csv' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above
+
+
+# Import IMD data
+buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping' ## my bucket name
+
+imd <-s3read_using(import # Which function are we using to read
+                     , object = 'data/IMD_LAD.xlsx' # File to open
+                     , bucket = buck) # Bucket name defined above
+    # Source: https://www.gov.uk/government/statistics/english-indices-of-deprivation-2019
+
+
+dim(imd)
+# 317 LAs in file
+
+# tidy column names
+imd<-imd %>% 
+  clean_names() 
+
+imd <- imd %>%
+  dplyr::select("local_authority_district_name_2019", "imd_rank_of_average_rank")
+
+tabyl(imd$imd_rank_of_average_rank, show_missing_levels = T)
+
+# Make a variable to identify top and bottom quintile of LAs
+imd <- imd %>%
+  mutate(quintile = cut(imd_rank_of_average_rank,
+                        breaks = quantile(imd_rank_of_average_rank, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1, NA)),
+                        labels = 1:5, na.rm = TRUE))
+
+# merge data
+age_dta <- left_join(age_dta, imd, by = c("geography" = "local_authority_district_name_2019"))
+
+
+### code which didn't work 
+age_dta <- age_dta %>%
+  mutate(quintile2 = cut(imd_rank_of_average_rank,
+                        breaks = quantile(imd_rank_of_average_rank, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1, NA)),
+                        na.rm = TRUE))
+
+
+# calculate net migration by age for top and bottom IMD quintiles
+summary(subset(age_dta, quintile == 1 & Country == 'England')$under_34_netmigration)
+summary(subset(age_dta, quintile == 5 & Country == 'England')$under_34_netmigration)
+
+summary(subset(age_dta, quintile == 1 & Country == 'England')$x35_to_64_netmigration)
+summary(subset(age_dta, quintile == 5 & Country == 'England')$x35_to_64_netmigration)
+
+summary(subset(age_dta, quintile == 1 & Country == 'England')$x65plus_netmigration)
+summary(subset(age_dta, quintile == 5 & Country == 'England')$x65plus_netmigration)
+
+
+tibble_age2 <- age_dta %>%
+  dplyr::filter(Country == 'England') %>%
+  group_by(quintile = quintile) %>%
+  summarise(med_netmigration_under34 = median(under_34_netmigration),
+            q1_under34 = quantile(under_34_netmigration, 0.25),
+            q3_under34 = quantile(under_34_netmigration, 0.75),
+            med_netmigration_35to64 = median(x35_to_64_netmigration), 
+            q1_35to64 = quantile(x35_to_64_netmigration, 0.25),
+            q3_35to64 = quantile(x35_to_64_netmigration, 0.75),
+            med_netmigration_65plus = median(x65plus_netmigration),
+            q1_65plus = quantile(x65plus_netmigration, 0.25),
+            q3_65plus = quantile(x65plus_netmigration, 0.75))
+tibble_age2
+options(pillar.sigfig=3) # controls number of digits displayed, couldn't figure out how to limit to 2 decimal places in csv below
+
+s3write_using(tibble_age2 # What R object we are saving
+              , FUN = write_csv # Which R function we are using to save
+              , object = 'outputs/table_netmigration_age_imd.csv' # Name of the file to save to (include file type)
               , bucket = buck) # Bucket name defined above
 
 
