@@ -30,13 +30,12 @@ health <- s3read_using(FUN = fread,
                                                  netmigration_notlim)]
 
 ea <- s3read_using(FUN = fread,
-                   object = 'Francesca/mobility_scoping/data/clean/ea_with_students_net_migration_LAD.csv',
-                   bucket = data_bucket)[, .(LAD11CD,
+                   object = 'Francesca/mobility_scoping/data/clean/ea_with_students_net_migration_LAD_v2.csv',
+                   bucket = data_bucket)[, .(geography,
+                                             geography_code,
                                              ea_netmigration,
                                              ei_netmigration,
-                                             student_netmigration)][
-                                               , geography_code := LAD11CD
-                                             ]
+                                             student_netmigration)]
 
 setdiff(health$geography_code, age$geography_code)
 setdiff(age$geography_code, health$geography_code)
@@ -66,13 +65,22 @@ data$geography <- NULL
 str(data)
 
 data <- scale(data) %>% data.frame()
-
+names(data) <- c('younger',
+                 'middle aged',
+                 'retirement age',
+                 'poorer health',
+                 'reasonable health',
+                 'healthy',
+                 'economically active',
+                 'economically inactive',
+                 'students')
 
 set.seed(6524531)
-fit <- kmeans(data, 2, nstart = 25)
+fit <- kmeans(data, 4, nstart = 25)
 
 clusplot(data, fit$cluster, color=TRUE, shade=TRUE, main = 'LSOA Cluster Analysis',
          labels=2, lines=0)
+
 
 aggregate(data, by=list(cluster=fit$cluster), min)
 aggregate(data, by=list(cluster=fit$cluster), max)
