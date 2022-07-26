@@ -10,7 +10,10 @@ pacman::p_load(sf,
                XML,
                tmap,
                THFstyle,
-               devtools)
+               devtools,
+               aws.s3,
+               rio,
+               dplyr)
 
 
 # install HatchedPolygons for overlaid map
