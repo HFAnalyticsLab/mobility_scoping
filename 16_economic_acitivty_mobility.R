@@ -505,6 +505,10 @@ tabyl(eng_dta$EA_mig)
 
 
 write.csv(eng_dta, "eng_dta.csv")
+s3write_using(eng_dta # What R object we are saving
+              , FUN = write.csv # Which R function we are using to save
+              , object = 'ea_with_students_net_migration_LAD.csv' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above
 
 
 eng_dta2 <- eng_dta %>%
