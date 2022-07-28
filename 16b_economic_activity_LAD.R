@@ -124,6 +124,35 @@ ea_dta<-clean_dta %>%
 ea_dta<-ea_dta %>% 
   dplyr::select(contains (c("geography", "geography_code", "netmigration")))
 
+
+# Drop Scotland and Northern Ireland
+ea_dta <- ea_dta %>%
+  subset(str_detect(geography_code, '^E') | str_detect(geography_code, '^W'))
+
+summ(ea_dta$ea_netmigration) #med = 1.016
+summ(ea_dta$ei_netmigration) # med = 0.574
+summ(ea_dta$ea_student_netmigration) # med = -6.958
+summ(ea_dta$ei_student_netmigration) # med = -7.804
+summ(ea_dta$student_netmigration) #-7.243
+
+
+  # NOTE: changed cut-offs since including Wales gave us slightly different medians
+
+ea_dta <- ea_dta %>%
+  mutate(EA_mig = case_when(
+    ea_netmigration <=1.016 & ei_netmigration <=0.574 & student_netmigration <=-7.243 ~ "Below median net migration - all groups",
+    ea_netmigration >1.016 & ei_netmigration >0.574 &student_netmigration> -7.243 ~ "Above median net migration - all groups",
+    ea_netmigration >1.016 & ei_netmigration <=0.574 &student_netmigration<= -7.243~ "Above median net migration - Economically active",
+    ea_netmigration <=1.016 & ei_netmigration >0.574 &student_netmigration<= -7.243 ~ "Above median net migration - Economically inactive", 
+    ea_netmigration <=1.016 & ei_netmigration <=0.574 &student_netmigration> -7.243 ~ "Above median net migration - Students",
+    ea_netmigration <=1.016 & ei_netmigration >0.574 &student_netmigration> -7.243 ~ "Below median net migration - Economically active only",
+    ea_netmigration >1.016 & ei_netmigration <=0.574 &student_netmigration> -7.243 ~ "Below median net migration - Economically inactive only",
+    ea_netmigration >1.016 & ei_netmigration >0.574 &student_netmigration<= -7.243 ~ "Below median net migration - Students only"))
+
+tabyl(ea_dta$EA_mig)
+
+
+
 # Save data
 buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
 
@@ -133,4 +162,56 @@ s3write_using(ea_dta # What R object we are saving
               , bucket = buck) # Bucket name defined above
 
 
+# load packages
+pacman::p_load(sf,
+               XML,
+               tmap,
+               THFstyle,
+               devtools, 
+               viridis)
 
+# import shp data
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.shp',
+            file = here::here("shapefiles", "eng.shp"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.cpg',
+            file = here::here("shapefiles", "eng.cpg"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.dbf',
+            file = here::here("shapefiles", "eng.dbf"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.prj',
+            file = here::here("shapefiles", "eng.prj"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.shx',
+            file = here::here("shapefiles", "eng.shx"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.xml',
+            file = here::here("shapefiles", "eng.xml"))
+
+# read LAD boundaries
+lad_shp <- st_read(here::here("shapefiles", "eng.shp"))
+
+str(lad_shp)
+
+# Drop Scotland and Northern Ireland
+lad_shp <- lad_shp %>%
+  subset(str_detect(lad11cd, 'E') | str_detect(lad11cd, 'W'))
+
+# replace name for Rhondda so it merges correctly
+ea_dta <- ea_dta %>%
+  mutate(geography = replace(geography, geography == "Rhondda Cynon Taff", "Rhondda Cynon Taf"))
+ea_dta <- ea_dta %>%
+  mutate(geography = replace(geography, geography == "Folkestone and Hythe", "Shepway"))
+ea_dta <- ea_dta %>%
+  mutate(geography = replace(geography, geography == "Vale of Glamorgan", "The Vale of Glamorgan"))
+
+# Join spatial data
+lad_shp <- left_join(lad_shp, ea_dta, by = c("lad11nm" = "geography"))
+
+
+# Map of age migration classification
+map16b_1 <- tm_shape(lad_shp) +
+  tm_borders(, alpha=0) +
+  tm_fill(col = "EA_mig", style = "cat", palette = "viridis", title = "Mobility by age") +
+  tm_layout(legend.title.size = 1,
+            legend.text.size = 0.6,
+            legend.position = c("left","top"),
+            legend.bg.color = "white",
+            legend.bg.alpha = 1)
+map16b_1
