@@ -190,6 +190,28 @@ s3write_using(lad_shp # What R object we are saving
 
 
 
+# validating against new census data --------------------------------------
 
+new_census <- s3read_using(import # Which function are we using to read
+                        , object = 'pop_change.csv' # File to open
+                        , bucket = buck) # Bucket name defined above
+
+new_census<-new_census %>% 
+  janitor::row_to_names(.,3,remove_rows_above = TRUE) %>% 
+  clean_names() %>% 
+  dplyr::select(la_code:percentage_change) %>% 
+  dplyr::filter(., grepl("E|W", la_code)) %>% 
+  mutate(percentage_change=as.numeric(percentage_change))
+  
+
+old_census<-eng_dta %>% 
+  dplyr::select(geography_code, n_usualres11, netmigration)
+  
+
+census<-new_census %>% 
+  full_join(old_census, by=c("la_code"="geography_code")) %>% 
+  dplyr::filter(., !grepl("EE|WW", la_code))
+
+#proportion that didn't match
 
 
