@@ -129,11 +129,11 @@ ea_dta<-ea_dta %>%
 ea_dta <- ea_dta %>%
   subset(str_detect(geography_code, '^E') | str_detect(geography_code, '^W'))
 
-summ(ea_dta$ea_netmigration) #med = 1.016
-summ(ea_dta$ei_netmigration) # med = 0.574
-summ(ea_dta$ea_student_netmigration) # med = -6.958
-summ(ea_dta$ei_student_netmigration) # med = -7.804
-summ(ea_dta$student_netmigration) #-7.243
+summary(ea_dta$ea_netmigration) #med = 1.016
+summary(ea_dta$ei_netmigration) # med = 0.574
+summary(ea_dta$ea_student_netmigration) # med = -6.958
+summary(ea_dta$ei_student_netmigration) # med = -7.804
+summary(ea_dta$student_netmigration) #-7.243
 
 
   # NOTE: changed cut-offs since including Wales gave us slightly different medians
@@ -160,6 +160,130 @@ s3write_using(ea_dta # What R object we are saving
               , FUN = write.csv # Which R function we are using to save
               , object = 'ea_with_students_net_migration_LAD_v2.csv' # Name of the file to save to (include file type)
               , bucket = buck) # Bucket name defined above
+
+
+
+# Import Levelling Up data
+buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping' ## my bucket name
+
+levup <-s3read_using(import # Which function are we using to read
+                     , object = 'data/Levelling_Up_priority_areas/Levelling_Up_Fund_list_of_local_authorities_by_priority_category.xlsx' # File to open
+                     , bucket = buck) # Bucket name defined above
+
+
+dim(levup)
+# 368 LAs in file
+
+# tidy column names
+names(levup)<-str_replace_all(names(levup), c(" " = "." ))
+
+tabyl(levup$Priority.category, show_missing_levels = T)
+
+
+
+# merge data
+ea_dta <- left_join(ea_dta, levup, by = c("geography" = "Name"))
+
+
+# calculate net migration by age and by Levelling Up category
+summary(subset(ea_dta, Priority.category == 1 & Country == 'England')$ea_netmigration)
+summary(subset(ea_dta, Priority.category == 2 & Country == 'England')$ea_netmigration)
+summary(subset(ea_dta, Priority.category == 3 & Country == 'England')$ea_netmigration)
+
+summary(subset(ea_dta, Priority.category == 1 & Country == 'England')$ei_netmigration)
+summary(subset(ea_dta, Priority.category == 2 & Country == 'England')$ei_netmigration)
+summary(subset(ea_dta, Priority.category == 3 & Country == 'England')$ei_netmigration)
+
+summary(subset(ea_dta, Priority.category == 1 & Country == 'England')$student_netmigration)
+summary(subset(ea_dta, Priority.category == 2 & Country == 'England')$student_netmigration)
+summary(subset(ea_dta, Priority.category == 3 & Country == 'England')$student_netmigration)
+
+
+tibble_ea <- ea_dta %>%
+  dplyr::filter(Country == 'England') %>%
+  group_by(levelling_up_priority = Priority.category) %>%
+  summarise(med_netmigration_ea = median(ea_netmigration),
+            q1_ea = quantile(ea_netmigration, 0.25),
+            q3_ea = quantile(ea_netmigration, 0.75),
+            med_netmigration_ei = median(ei_netmigration), 
+            q1_ei = quantile(ei_netmigration, 0.25),
+            q3_ei = quantile(ei_netmigration, 0.75),
+            med_netmigration_student = median(student_netmigration),
+            q1_student = quantile(student_netmigration, 0.25),
+            q3_student = quantile(student_netmigration, 0.75))
+tibble_ea
+options(pillar.sigfig=3) # controls number of digits displayed, couldn't figure out how to limit to 2 decimal places in csv below
+
+s3write_using(tibble_ea # What R object we are saving
+              , FUN = write_csv # Which R function we are using to save
+              , object = 'outputs/table_netmigration_ea_levellingup.csv' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above
+
+
+# Import IMD data
+buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping' ## my bucket name
+
+imd <-s3read_using(import # Which function are we using to read
+                   , object = 'data/IMD_LAD.xlsx' # File to open
+                   , bucket = buck) # Bucket name defined above
+# Source: https://www.gov.uk/government/statistics/english-indices-of-deprivation-2019
+
+
+dim(imd)
+# 317 LAs in file
+
+# tidy column names
+imd<-imd %>% 
+  clean_names() 
+
+imd <- imd %>%
+  dplyr::select("local_authority_district_name_2019", "imd_rank_of_average_rank")
+
+tabyl(imd$imd_rank_of_average_rank, show_missing_levels = T)
+
+# Make a variable to identify top and bottom quintile of LAs
+imd <- imd %>%
+  mutate(quintile = cut(imd_rank_of_average_rank,
+                        breaks = quantile(imd_rank_of_average_rank, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1, NA)),
+                        labels = 1:5, na.rm = TRUE))
+
+# merge data
+ea_dta <- left_join(ea_dta, imd, by = c("geography" = "local_authority_district_name_2019"))
+
+
+
+# calculate net migration by age for top and bottom IMD quintiles
+summary(subset(ea_dta, quintile == 1 & Country == 'England')$ea_netmigration)
+summary(subset(ea_dta, quintile == 5 & Country == 'England')$ea_netmigration)
+
+summary(subset(ea_dta, quintile == 1 & Country == 'England')$ei_netmigration)
+summary(subset(ea_dta, quintile == 5 & Country == 'England')$ei_netmigration)
+
+summary(subset(ea_dta, quintile == 1 & Country == 'England')$student_netmigration)
+summary(subset(ea_dta, quintile == 5 & Country == 'England')$student_netmigration)
+
+
+tibble_ea2 <- clean_dta %>%
+  dplyr::filter(Country == 'England') %>%
+  group_by(quintile = quintile) %>%
+  summarise(med_netmigration_ea = median(ea_netmigration),
+            q1_ea = quantile(ea_netmigration, 0.25),
+            q3_ea = quantile(ea_netmigration, 0.75),
+            med_netmigration_ei = median(ei_netmigration), 
+            q1_ei = quantile(ei_netmigration, 0.25),
+            q3_ei = quantile(ei_netmigration, 0.75),
+            med_netmigration_student = median(student_netmigration),
+            q1_student = quantile(student_netmigration, 0.25),
+            q3_student = quantile(student_netmigration, 0.75))
+tibble_ea2
+options(pillar.sigfig=3) # controls number of digits displayed, couldn't figure out how to limit to 2 decimal places in csv below
+
+s3write_using(tibble_ea2 # What R object we are saving
+              , FUN = write_csv # Which R function we are using to save
+              , object = 'outputs/table_netmigration_ea_imd.csv' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above
+
+
 
 
 # load packages
@@ -208,7 +332,7 @@ lad_shp <- left_join(lad_shp, ea_dta, by = c("lad11nm" = "geography"))
 # Map of age migration classification
 map16b_1 <- tm_shape(lad_shp) +
   tm_borders(, alpha=0) +
-  tm_fill(col = "EA_mig", style = "cat", palette = "viridis", title = "Mobility by age") +
+  tm_fill(col = "EA_mig", style = "cat", palette =  c('#53a9cd', '#2a7979', '#F39214', '#744284',  '#dd0031', '#ee9b90', '#0c402b', '#a6d7d3'), title = "") +
   tm_layout(legend.title.size = 1,
             legend.text.size = 0.6,
             legend.position = c("left","top"),

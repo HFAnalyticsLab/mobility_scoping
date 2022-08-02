@@ -123,6 +123,7 @@ ggbiplot(pca)
 ggbiplot(pca, labels = rownames(data))
 ggbiplot(pca, groups = as.character(fit$cluster)) + 
   theme_minimal() +
+  scale_color_manual(values=c('#dd0031', '#53a9cd', '#744284', '#F39214')) +
   theme(legend.position = 'none') +
   ggtitle('PCA analyis at LA level - population mobility factors') +
   xlab('PC1 - EI and older group migration') +
@@ -212,17 +213,14 @@ tabyl(lad_shp$cluster)
 lad_shp <- lad_shp %>% 
   mutate(cluster_lab = case_when(
     cluster ==1 ~ "Outliers",
-    cluster == 2 ~ "1- Older/poorer health/ec. inactive",
-    cluster == 3 ~ "2- General outmigration", 
-    cluster == 4 ~ "3- Younger/healthier/students"
+    cluster == 2 ~ "2- Not younger/healthier/students",
+    cluster == 3 ~ "3- General low net migration", 
+    cluster == 4 ~ "1- Younger/healthier/students"
   ))
 
 
 # Map of age migration classification
-pal <- wes_palette("FantasticFox1", type = "discrete")
-pal <- wes_palette("Zissou1", type = "discrete")
-
-pal <- c("#DD8D29", "#E2D200", "#46ACC8", "#F21A00")
+pal <- c('#F39214', '#53a9cd' ,'#744284', '#dd0031')
 map17_1 <- tm_shape(lad_shp) +
   tm_borders(, alpha=0) +
   tm_fill(col = "cluster_lab", style = "cat", palette = pal, title = "Mobility clusters") +
