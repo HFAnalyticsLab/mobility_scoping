@@ -48,7 +48,7 @@ save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mr
             file = here::here("shapefiles", "eng.xml"))
 
 # read LAD boundaries
-lad_shp <- st_read(here::here("shapefiles", "eng.shp"))
+lad_shp <- sf::st_read(here::here("shapefiles", "eng.shp"))
 
 str(lad_shp)
 
@@ -290,6 +290,13 @@ s3write_using(tibble_health2 # What R object we are saving
 lad_shp <- left_join(lad_shp,clean_dta , by = c("lad11nm" = "geography"))
 # geography.code is the LAD code in the eng_dta df and lad11cd the code in the shapefile data
 
+# load packages
+pacman::p_load(sf,
+               XML,
+               tmap,
+               THFstyle,
+               devtools, 
+               viridis)
 
 #For saving maps 
 buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/outputs' ## my bucket name
@@ -332,7 +339,7 @@ map15_3
 
 map15_4 <- tm_shape(lad_shp) +
   tm_borders(,alpha=0) +
-  tm_fill(col = "health_mig",  style = "cat", palette = "viridis", title = "Mobility by health status") +
+  tm_fill(col = "health_mig",  style = "cat", palette = c('#F39214', '#744284', '#53a9cd', '#dd0031'), title = "Mobility by health status") +
   tm_layout(legend.title.size = 0.8,
             legend.text.size = 0.6,
             legend.position = c("left","top"),
