@@ -102,6 +102,12 @@ t<-boxplot(eng_dta$netmigration,data=eng_dta, main="Net Migration",
 #save net_migration data
 
 #save data
+
+eng_dta<-eng_dta %>% 
+  mutate(netmigration_lab=case_when(netmigration < -1 ~ "Negative (greater than 1% of people leaving)",
+                                             netmigration > 1 ~ "Positive (greater than 1% of people moving in)", 
+                                             TRUE ~ "stable migration (~1% of population moving in and out)"))
+
 buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
 
 s3write_using(eng_dta # What R object we are saving
@@ -112,7 +118,9 @@ s3write_using(eng_dta # What R object we are saving
 
 
 
-#merging CDRC with census data
+# Merging CDRC with census data -------------------------------------------
+
+
 
 cdrc_eng<-eng_dta %>% 
   dplyr::select(1:3, netmigration) %>% 
@@ -131,6 +139,56 @@ corr
 
 #net migration in 2010-11 is strongly correlated with change in RMI index from 2010 and 2011 compared to 2020 
 #change in RM  in 2019 is assoc with change in RM in 2011 and 2010 but weakly associated with net migration 
+
+
+
+# Combining with shape files ----------------------------------------------
+
+# import shp data
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.shp',
+            file = here::here("shapefiles", "eng.shp"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.cpg',
+            file = here::here("shapefiles", "eng.cpg"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.dbf',
+            file = here::here("shapefiles", "eng.dbf"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.prj',
+            file = here::here("shapefiles", "eng.prj"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.shx',
+            file = here::here("shapefiles", "eng.shx"))
+save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.xml',
+            file = here::here("shapefiles", "eng.xml"))
+
+# read LAD boundaries
+lad_shp <- st_read(here::here("shapefiles", "eng.shp"))
+
+str(lad_shp)
+
+# Drop Scotland and Northern Ireland
+lad_shp <- lad_shp %>%
+  subset(str_detect(lad11cd, 'E') | str_detect(lad11cd, 'W'))
+
+# replace name for Rhondda so it merges correctly
+eng_dta <- eng_dta %>%
+  mutate(geography = replace(geography, geography == "Rhondda Cynon Taff", "Rhondda Cynon Taf"))
+eng_dta <- eng_dta %>%
+  mutate(geography = replace(geography, geography == "Folkestone and Hythe", "Shepway"))
+eng_dta <- eng_dta %>%
+  mutate(geography = replace(geography, geography == "Vale of Glamorgan", "The Vale of Glamorgan"))
+
+# Join spatial data
+lad_shp <- left_join(lad_shp, eng_dta, by = c("lad11nm" = "geography"))
+
+
+buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
+
+s3write_using(lad_shp # What R object we are saving
+              , FUN = write.csv # Which R function we are using to save
+              , object = 'net_migration_LAD_with_shp.csv' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above
+
+
+
+
 
 
 
