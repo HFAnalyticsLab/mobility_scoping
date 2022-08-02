@@ -153,6 +153,18 @@ ggbiplot(pca, groups = as.character(fit$cluster), labels = rownames(data), choic
   xlab('PC3 - ei and older group migration') +
   ylab('PC4 - healthy and younger group migration')
 
+<<<<<<< HEAD
+data$cluster <- fit$cluster
+
+cluster1 <- data[data$cluster == 2, -10]
+## PCA
+pca_1 <- prcomp(cluster1, center = TRUE)
+summary(pca_1)
+str(pca_1)
+
+ggbiplot(pca_1)
+ggbiplot(pca_1, labels = rownames(cluster1))
+=======
 
 
 
@@ -230,3 +242,4 @@ map17_1 <- tm_shape(lad_shp) +
             legend.bg.color = "white",
             legend.bg.alpha = 1)
 map17_1
+>>>>>>> 778a4b2fb81921343e6e142d939eedb1545ef9e4
