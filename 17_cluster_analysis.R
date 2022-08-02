@@ -168,7 +168,6 @@ ggbiplot(pca_1, labels = rownames(cluster1))
 
 
 
-
 # Map cluster classification
 
 # load packages
@@ -243,3 +242,34 @@ map17_1 <- tm_shape(lad_shp) +
             legend.bg.alpha = 1)
 map17_1
 >>>>>>> 778a4b2fb81921343e6e142d939eedb1545ef9e4
+
+
+
+
+#Merge with life expectancy data
+## data were downloaded from: https://www.nomisweb.co.uk/census/2011/ukmig006
+le_dta <- s3read_using(import, 
+                       object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/life_expectancy_LA.xlsx') # File to open 
+
+dim(le_dta)      #55 variables, 16842 observations
+
+# tidy variables names
+le_dta<-le_dta %>% 
+  clean_names() 
+#remove spaces so that we can refer to column names in functions
+
+
+le_dta <- le_dta %>%
+  dplyr::filter(x4 == "00-01")
+
+le_dta <- le_dta %>%
+  dplyr::select("title", "life_expectancy_by_local_authority", x3, x53)
+
+le_dta$x53 <- as.numeric(le_dta$x53)
+
+le_dta <- left_join(le_dta, data, by = c("title" = "geography"))
+
+
+
+
+
