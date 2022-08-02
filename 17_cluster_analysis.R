@@ -146,3 +146,13 @@ ggbiplot(pca, groups = as.character(fit$cluster), labels = rownames(data), choic
   xlab('PC3 - ei and older group migration') +
   ylab('PC4 - healthy and younger group migration')
 
+data$cluster <- fit$cluster
+
+cluster1 <- data[data$cluster == 2, -10]
+## PCA
+pca_1 <- prcomp(cluster1, center = TRUE)
+summary(pca_1)
+str(pca_1)
+
+ggbiplot(pca_1)
+ggbiplot(pca_1, labels = rownames(cluster1))
