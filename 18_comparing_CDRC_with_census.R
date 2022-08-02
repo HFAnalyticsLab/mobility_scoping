@@ -1,0 +1,137 @@
+
+# CDRC by LA compare with net migration in 2010-11  --------------------------------------------------------------
+
+# Housekeeping
+# clear R environment
+rm(list = ls())
+
+
+#load packages
+pacman::p_load(tidyverse, 
+               janitor,
+               rio, 
+               ggplot2, 
+               magrittr, 
+               stringr, 
+               here, 
+               aws.s3,
+               readr,
+               Hmisc)
+
+
+
+# Data load ---------------------------------------------------------------
+
+buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data' ## my bucket name
+
+cdrc_lad<-s3read_using(read_csv # Which function are we using to read
+                        , object = 'CDRC_residential_mobility_index_LAD.csv' # File to open
+                        , bucket = buck) # Bucket name defined above
+
+#have churn of every year from 1997-2019 compared to 2020
+summary(cdrc_lad)
+
+
+#drop 2020 (no data) and only include England and Wales code
+cdrc_lad_clean<-cdrc_lad %>% 
+  dplyr::select(area,chn2019, chn2011, chn2010) %>% 
+  dplyr::filter(., grepl("E|W", area))
+
+#summary of data
+
+cdrc_plot<-cdrc_lad_clean %>% 
+  dplyr::select(chn2019:chn2010) %>% 
+  pivot_longer(everything(), names_to="year", values_to="RMIx2020")
+  
+
+t<-boxplot(RMIx2020~year,data=cdrc_plot, main="Net Migration by Year",
+           xlab="Year", ylab="Net Migration")
+
+
+
+# Migration data ----------------------------------------------------------
+
+
+eng_dta <- s3read_using(import # Which function are we using to read
+                        , object = 'la_migration.csv' # File to open
+                        , bucket = buck) # Bucket name defined above
+
+eng_dta<-eng_dta %>% 
+  clean_names()
+
+
+# naming unneeded colums x, y, z
+names(eng_dta)[4:10]<-c('n_usualres11', 'n_samead', 'x' , 'n_movedwithin','n_inmiguk','n_inmigfor','n_outmig')
+
+# usual residents one year before census
+eng_dta <- eng_dta %>%
+  mutate(n_usualres10 = n_samead + n_outmig + n_movedwithin)
+
+# usual residents - midyear
+eng_dta <- eng_dta %>% 
+  mutate(midyrpop = (n_usualres10 + n_usualres11)/2)
+
+# total inmigrants
+eng_dta <- eng_dta %>%
+  mutate(n_inmig = n_inmiguk + n_inmigfor)
+
+
+#drop columns don't need
+eng_dta <- eng_dta %>% 
+  dplyr::select(1:3, midyrpop, !contains("migration")) 
+
+head(eng_dta)
+
+class(eng_dta$n_samead)
+
+#calculate net migration
+
+eng_dta<-eng_dta %>% 
+  mutate(netmigration=(n_inmig-n_outmig)/(midyrpop)*100)
+
+
+#only keep england and wales 
+eng_dta<-eng_dta %>% 
+  dplyr::filter(., grepl("E|W", geography_code))
+
+#summary of net migration
+
+t<-boxplot(eng_dta$netmigration,data=eng_dta, main="Net Migration",
+           xlab="", ylab="Net Migration")
+
+#save net_migration data
+
+#save data
+buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
+
+s3write_using(eng_dta # What R object we are saving
+              , FUN = write.csv # Which R function we are using to save
+              , object = 'net_migration_LAD.csv' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above
+
+
+
+
+#merging CDRC with census data
+
+cdrc_eng<-eng_dta %>% 
+  dplyr::select(1:3, netmigration) %>% 
+  full_join(cdrc_lad_clean, by=c("geography_code"="area"))
+# %>% 
+#   dplyr::filter(., !grepl("EE|WW", geography_code))
+
+#Correlation for net migration and RMI index
+
+cdrc_eng_clean<-cdrc_eng %>% 
+  drop_na() %>% 
+  dplyr::select(-c("date", "geography", "geography_code"))
+  
+corr <- rcorr(as.matrix(cdrc_eng_clean), type="spearman")
+corr
+
+#net migration in 2010-11 is strongly correlated with change in RMI index from 2010 and 2011 compared to 2020 
+#change in RM  in 2019 is assoc with change in RM in 2011 and 2010 but weakly associated with net migration 
+
+
+
+
