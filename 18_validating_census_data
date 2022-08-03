@@ -142,54 +142,6 @@ corr
 
 
 
-# Combining with shape files ----------------------------------------------
-
-# import shp data
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.shp',
-            file = here::here("shapefiles", "eng.shp"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.cpg',
-            file = here::here("shapefiles", "eng.cpg"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.dbf',
-            file = here::here("shapefiles", "eng.dbf"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.prj',
-            file = here::here("shapefiles", "eng.prj"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.shx',
-            file = here::here("shapefiles", "eng.shx"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.xml',
-            file = here::here("shapefiles", "eng.xml"))
-
-# read LAD boundaries
-lad_shp <- st_read(here::here("shapefiles", "eng.shp"))
-
-str(lad_shp)
-
-# Drop Scotland and Northern Ireland
-lad_shp <- lad_shp %>%
-  subset(str_detect(lad11cd, 'E') | str_detect(lad11cd, 'W'))
-
-# replace name for Rhondda so it merges correctly
-eng_dta <- eng_dta %>%
-  mutate(geography = replace(geography, geography == "Rhondda Cynon Taff", "Rhondda Cynon Taf"))
-eng_dta <- eng_dta %>%
-  mutate(geography = replace(geography, geography == "Folkestone and Hythe", "Shepway"))
-eng_dta <- eng_dta %>%
-  mutate(geography = replace(geography, geography == "Vale of Glamorgan", "The Vale of Glamorgan"))
-
-# Join spatial data
-lad_shp <- left_join(lad_shp, eng_dta, by = c("lad11nm" = "geography"))
-
-
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
-
-s3write_using(lad_shp # What R object we are saving
-              , FUN = write.csv # Which R function we are using to save
-              , object = 'net_migration_LAD_with_shp.csv' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above
-
-
-
-
-
 # validating against new census data --------------------------------------
 
 new_census <- s3read_using(import # Which function are we using to read
@@ -230,4 +182,10 @@ census_corr<-census %>%
   
 corr <- rcorr(as.matrix(census_corr), type="spearman")
 corr
+
+
+#corelating new census with cdrc
+
+
+
 
