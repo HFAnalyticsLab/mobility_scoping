@@ -201,8 +201,11 @@ new_census<-new_census %>%
   clean_names() %>% 
   dplyr::select(la_code:percentage_change) %>% 
   dplyr::filter(., grepl("E|W", la_code)) %>% 
-  mutate(percentage_change=as.numeric(percentage_change))
-  
+  mutate(across(everything(), gsub, pattern=",",replacement="")) %>% 
+  mutate(percentage_change=as.numeric(percentage_change),
+         usual_resident_population_2011=as.numeric(usual_resident_population_2011),
+         usual_resident_population_2021 =as.numeric(usual_resident_population_2021))
+
 
 old_census<-eng_dta %>% 
   dplyr::select(geography_code, n_usualres11, netmigration)
@@ -210,8 +213,21 @@ old_census<-eng_dta %>%
 
 census<-new_census %>% 
   full_join(old_census, by=c("la_code"="geography_code")) %>% 
-  dplyr::filter(., !grepl("EE|WW", la_code))
+  dplyr::filter(., !grepl("EE|WW", la_code)) %>% 
+  mutate(percent_change_check=((usual_resident_population_2021-n_usualres11)
+         /((n_usualres11+usual_resident_population_2021)/2)*100))
 
 #proportion that didn't match
+summary(census)
 
+#25 areas don't have net migration and about 8 areas are not in the new census 
+
+#correlations for those without NA
+
+census_corr<-census %>% 
+  drop_na() %>% 
+  select(contains(c("change", "migration")))
+  
+corr <- rcorr(as.matrix(census_corr), type="spearman")
+corr
 
