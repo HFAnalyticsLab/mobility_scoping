@@ -188,4 +188,18 @@ corr
 
 
 
+census_cdrc_corr<-census %>% 
+  full_join(cdrc_lad_clean, by=c("la_code"="area"))
 
+
+summary(census_cdrc_corr)
+
+#20 didn't merge 
+
+census_cdrc_corr<-census_cdrc_corr %>% 
+    select(contains(c("change", "migration", "chn"))) %>% 
+  drop_na()
+
+
+corr <- rcorr(as.matrix(census_cdrc_corr), type="spearman")
+corr
