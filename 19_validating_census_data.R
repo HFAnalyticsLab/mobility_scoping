@@ -1,4 +1,3 @@
-
 # CDRC by LA compare with net migration in 2010-11  --------------------------------------------------------------
 
 # Housekeeping
@@ -25,8 +24,8 @@ pacman::p_load(tidyverse,
 buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data' ## my bucket name
 
 cdrc_lad<-s3read_using(read_csv # Which function are we using to read
-                        , object = 'CDRC_residential_mobility_index_LAD.csv' # File to open
-                        , bucket = buck) # Bucket name defined above
+                       , object = 'CDRC_residential_mobility_index_LAD.csv' # File to open
+                       , bucket = buck) # Bucket name defined above
 
 #have churn of every year from 1997-2019 compared to 2020
 summary(cdrc_lad)
@@ -42,7 +41,7 @@ cdrc_lad_clean<-cdrc_lad %>%
 cdrc_plot<-cdrc_lad_clean %>% 
   dplyr::select(chn2019:chn2010) %>% 
   pivot_longer(everything(), names_to="year", values_to="RMIx2020")
-  
+
 
 t<-boxplot(RMIx2020~year,data=cdrc_plot, main="Net Migration by Year",
            xlab="Year", ylab="Net Migration")
@@ -105,8 +104,8 @@ t<-boxplot(eng_dta$netmigration,data=eng_dta, main="Net Migration",
 
 eng_dta<-eng_dta %>% 
   mutate(netmigration_lab=case_when(netmigration < -1 ~ "Negative (greater than 1% of people leaving)",
-                                             netmigration > 1 ~ "Positive (greater than 1% of people moving in)", 
-                                             TRUE ~ "stable migration (~1% of population moving in and out)"))
+                                    netmigration > 1 ~ "Positive (greater than 1% of people moving in)", 
+                                    TRUE ~ "stable migration (~1% of population moving in and out)"))
 
 buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
 
@@ -133,7 +132,7 @@ cdrc_eng<-eng_dta %>%
 cdrc_eng_clean<-cdrc_eng %>% 
   drop_na() %>% 
   dplyr::select(-c("date", "geography", "geography_code"))
-  
+
 corr <- rcorr(as.matrix(cdrc_eng_clean), type="spearman")
 corr
 
@@ -145,8 +144,8 @@ corr
 # validating against new census data --------------------------------------
 
 new_census <- s3read_using(import # Which function are we using to read
-                        , object = 'pop_change.csv' # File to open
-                        , bucket = buck) # Bucket name defined above
+                           , object = 'pop_change.csv' # File to open
+                           , bucket = buck) # Bucket name defined above
 
 new_census<-new_census %>% 
   janitor::row_to_names(.,3,remove_rows_above = TRUE) %>% 
@@ -161,13 +160,13 @@ new_census<-new_census %>%
 
 old_census<-eng_dta %>% 
   dplyr::select(geography_code, n_usualres11, netmigration)
-  
+
 
 census<-new_census %>% 
   full_join(old_census, by=c("la_code"="geography_code")) %>% 
   dplyr::filter(., !grepl("EE|WW", la_code)) %>% 
   mutate(percent_change_check=((usual_resident_population_2021-n_usualres11)
-         /((n_usualres11+usual_resident_population_2021)/2)*100))
+                               /((n_usualres11+usual_resident_population_2021)/2)*100))
 
 #proportion that didn't match
 summary(census)
@@ -179,7 +178,7 @@ summary(census)
 census_corr<-census %>% 
   drop_na() %>% 
   select(contains(c("change", "migration")))
-  
+
 corr <- rcorr(as.matrix(census_corr), type="spearman")
 corr
 
@@ -197,7 +196,7 @@ summary(census_cdrc_corr)
 #20 didn't merge 
 
 census_cdrc_corr<-census_cdrc_corr %>% 
-    select(contains(c("change", "migration", "chn"))) %>% 
+  select(contains(c("change", "migration", "chn"))) %>% 
   drop_na()
 
 
