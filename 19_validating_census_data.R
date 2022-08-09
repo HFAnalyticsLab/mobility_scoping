@@ -7,10 +7,10 @@ rm(list = ls())
 
 #load packages
 pacman::p_load(tidyverse, 
+               gtsummary,
                janitor,
                rio, 
                ggplot2, 
-               magrittr, 
                stringr, 
                here, 
                aws.s3,
@@ -33,8 +33,12 @@ summary(cdrc_lad)
 
 #drop 2020 (no data) and only include England and Wales code
 cdrc_lad_clean<-cdrc_lad %>% 
-  dplyr::select(area,chn2019, chn2011, chn2010) %>% 
+  dplyr::select(area,chn2019, chn2011, chn2010, chn2015) %>% 
   dplyr::filter(., grepl("E|W", area))
+
+
+summary(cdrc_lad_clean)
+
 
 #summary of data
 
@@ -161,61 +165,6 @@ new_census<-new_census %>%
 old_census<-eng_dta %>% 
   dplyr::select(geography_code, n_usualres11, netmigration)
 
-
-
-
-
-# Validating against 2011 cdrc data ---------------------------------------
-
-
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data' ## my bucket name
-
-cdrc_lad_2011<-s3read_using(read_csv # Which function are we using to read
-                       , object = 'CDRC_LAD_2011.csv' # File to open
-                       , bucket = buck) # Bucket name defined above
-
-
-#have churn of every year from 1997-2019 compared to 2011
-summary(cdrc_lad_2011)
-
-
-cdrc_lad_clean<-cdrc_lad_2011 %>% 
-  filter(Year %in% c("2010", "2020")) %>% 
-  dplyr::select(LAD20name,Year, RMI) %>% 
-  mutate(Year=paste0("chn",Year)) %>% 
-  mutate(RMI=1-as.numeric(RMI))
-  
-#summary of data
-
-t<-boxplot(RMI~Year,data=cdrc_lad_clean, main="RMI by Year",
-           xlab="Year", ylab="RMI")
-
-t 
-
-
-cdrc_lad_clean<-cdrc_lad_clean %>% 
- pivot_wider(, names_from="Year", values_from="RMI")
-
-
-cdrc_eng<-eng_dta %>% 
-  dplyr::select(1:3, netmigration) %>% 
-  full_join(cdrc_lad_clean, by=c("geography"="LAD20name")) %>% 
- dplyr::filter(., !grepl("EE|WW", geography_code))
-
-#Correlation for net migration and RMI index
-
-cdrc_eng_clean<-cdrc_eng %>% 
-  drop_na() %>% 
-  dplyr::select(-c("date", "geography", "geography_code"))
-
-corr <- rcorr(as.matrix(cdrc_eng_clean), type="spearman")
-corr
-
-
-
-
-
-
 census<-new_census %>% 
   full_join(old_census, by=c("la_code"="geography_code")) %>% 
   dplyr::filter(., !grepl("EE|WW", la_code)) %>% 
@@ -256,3 +205,63 @@ census_cdrc_corr<-census_cdrc_corr %>%
 
 corr <- rcorr(as.matrix(census_cdrc_corr), type="spearman")
 corr
+
+
+
+
+
+# Validating against 2011 cdrc data ---------------------------------------
+
+
+buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data' ## my bucket name
+
+cdrc_lad_2011<-s3read_using(read_csv # Which function are we using to read
+                       , object = 'CDRC_LAD_2011.csv' # File to open
+                       , bucket = buck) # Bucket name defined above
+
+
+#have churn of every year from 1997-2019 compared to 2011
+summary(cdrc_lad_2011)
+
+
+cdrc_lad_clean<-cdrc_lad_2011 %>% 
+  filter(Year %in% c("2010", "2020")) %>% 
+  dplyr::select(LAD20name,Year, RMI) %>% 
+  mutate(Year=paste0("chn",Year)) %>% 
+  mutate(RMI=1-as.numeric(RMI))
+  
+#summary of data
+
+t<-boxplot(RMI~Year,data=cdrc_lad_clean, main="RMI by Year",
+           xlab="Year", ylab="RMI")
+
+t 
+
+cdrc_lad_clean %>% 
+  select(-LAD20name) %>% 
+  tbl_summary(, by=Year, digits=everything()~3) #default is median (25%,75%) 
+
+
+
+cdrc_eng<-eng_dta %>% 
+  dplyr::select(1:3, netmigration) %>% 
+  full_join(cdrc_lad_clean, by=c("geography"="LAD20name")) %>% 
+ dplyr::filter(., !grepl("EE|WW", geography_code))
+
+#Correlation for net migration and RMI index
+
+cdrc_eng_clean<-cdrc_eng %>% 
+  drop_na() %>% 
+  dplyr::select(-c("date", "geography", "geography_code"))
+
+corr <- rcorr(as.matrix(cdrc_eng_clean), type="spearman")
+corr
+
+
+
+
+
+
+
+
+
