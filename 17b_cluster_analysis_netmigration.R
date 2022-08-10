@@ -309,6 +309,10 @@ data %>%
 
 
 
+## FC stopped here - below not updated until previous code checked
+
+
+
 #Merge with life expectancy data
 ## data were downloaded from: https://www.nomisweb.co.uk/census/2011/ukmig006
 le_dta <- s3read_using(import, 
