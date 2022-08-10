@@ -42,12 +42,12 @@ names(eng_dta)<-str_replace_all(names(eng_dta), c(" " = "." , "," = "" , ";" = "
 
  # names(eng_dta)[4:10]<-c('n_usualres11','n_samead', 'n_totalmig','n_migwithin','n_inmiguk','n_inmigfor','n_outmig')
 
-eng_dta <- rename(eng_dta, n_samead = Migrationethnic.group.Lived.at.same.address.one.year.ago.measures.Value)
-eng_dta <- rename(eng_dta, n_usualres11 = Migrationethnic.group.All.usual.residents.measures.Value)
-eng_dta <- rename(eng_dta, n_movedwithin = Migrationethnic.group.Migrants.Moved.within.the.area.measures.Value)
-eng_dta <- rename(eng_dta, n_inmiguk = Migrationethnic.group.Migrants.Moved.into.the.area.from.within.the.UK.measures.Value)
-eng_dta <- rename(eng_dta, n_inmigfor = Migrationethnic.group.Migrants.Moved.into.the.area.from.outside.the.UK.measures.Value)
-eng_dta <- rename(eng_dta, n_outmig = Migrationethnic.group.Moved.out.of.the.area.measures.Value)
+eng_dta <- dplyr::rename(eng_dta, n_samead = Migrationethnic.group.Lived.at.same.address.one.year.ago.measures.Value)
+eng_dta <- dplyr::rename(eng_dta, n_usualres11 = Migrationethnic.group.All.usual.residents.measures.Value)
+eng_dta <- dplyr::rename(eng_dta, n_movedwithin = Migrationethnic.group.Migrants.Moved.within.the.area.measures.Value)
+eng_dta <- dplyr::rename(eng_dta, n_inmiguk = Migrationethnic.group.Migrants.Moved.into.the.area.from.within.the.UK.measures.Value)
+eng_dta <- dplyr::rename(eng_dta, n_inmigfor = Migrationethnic.group.Migrants.Moved.into.the.area.from.outside.the.UK.measures.Value)
+eng_dta <- dplyr::rename(eng_dta, n_outmig = Migrationethnic.group.Moved.out.of.the.area.measures.Value)
 
 
 #drop columns don't need

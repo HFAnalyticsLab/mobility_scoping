@@ -114,3 +114,12 @@ map18_1 <- tm_shape(lad_shp) +
             legend.bg.alpha = 1)
 map18_1
 
+
+# Save data
+buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
+
+s3write_using(lad_shp # What R object we are saving
+              , FUN = write.csv # Which R function we are using to save
+              , object = 'life_expectancy_for_Flourish.csv' # Name of the file to save to (include file type)
+              , bucket = buck) # Bucket name defined above
+

@@ -49,7 +49,7 @@ eng_dta<-s3read_using(readRDS # Which function are we using to read
 # Join spatial data
 msoa_shp <- left_join(msoa_shp, eng_dta, by = c("MSOA11CD" = "geography.code"))
 # geography.code is the MSOA code in the eng_dta df and MSOA11CD the code in the shapefile data
-  
+  tabyl(msoa_shp$mob_cat)
 
 
 # id for country name initial
