@@ -11,8 +11,8 @@ pacman::p_load(haven,
                survey, 
                janitor,
                questionr, 
+               gtsummary,
                epiDisplay, 
-               epirhandbook,
                rio, 
                ggplot2, 
                apyramid,
@@ -24,7 +24,8 @@ pacman::p_load(haven,
                matrixStats,
                tidyverse, 
                viridis, 
-               viridisLite)
+               viridisLite
+               )
 
 # import all data
 ## data were downloaded from: https://www.nomisweb.co.uk/census/2011/ukmig005 
