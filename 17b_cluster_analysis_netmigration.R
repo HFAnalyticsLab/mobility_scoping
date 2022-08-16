@@ -4,8 +4,7 @@
 # clear R environment
 rm(list = ls())
 
-library(plyr)
-library(dplyr)
+library(ggbiplot)
 library(tidyverse)
 library(factoextra)
 library(cluster)
@@ -14,10 +13,8 @@ library(rio)
 library(data.table)
 library(devtools)
 #install_github('vqv/ggbiplot')
-library(ggbiplot)
 library(stringr)
 library(janitor)
-
 
 data_bucket <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp'
 
@@ -151,8 +148,8 @@ ggbiplot(pca, groups = as.character(fit$cluster), labels = rownames(data)) +
   xlab('PC1 - ei and older group migration') +
   ylab('PC2 - healthy and younger group migration')
 
-## y axis is about healthy migration and young migration (PC2 - 32.8% var) reversed
-# x axis about economically inactive and older migration (PC1 - 36.1% var)
+## y axis is about healthy migration and young migration (PC2 - 33.9% var) reversed
+# x axis about economically inactive and older migration (PC1 - 38.0% var)
 
 ggbiplot(pca, choices = c(3, 4))
 ggbiplot(pca, labels = rownames(data), choices = c(3, 4))

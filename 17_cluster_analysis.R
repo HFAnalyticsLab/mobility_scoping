@@ -4,8 +4,7 @@
 # clear R environment
 rm(list = ls())
 
-library(plyr)
-library(dplyr)
+library(ggbiplot)
 library(tidyverse)
 library(factoextra)
 library(cluster)
@@ -14,7 +13,6 @@ library(rio)
 library(data.table)
 library(devtools)
 #install_github('vqv/ggbiplot')
-library(ggbiplot)
 library(stringr)
 
 
