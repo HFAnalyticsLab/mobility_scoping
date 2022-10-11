@@ -1,6 +1,5 @@
-## Preparing area-level mobility data, breakdown by health status - MSOAs
+## Preparing area-level mobility data, breakdown by health status - by Local Authority District
 
-# Housekeeping
 # clear R environment
 rm(list = ls())
 
@@ -22,19 +21,19 @@ pacman::p_load(haven,
                aws.s3,
                readr,
                matrixStats,
-               tidyverse, 
-               viridis, 
-               viridisLite
-               )
+               tidyverse)
+
 
 # import all data
 ## data were downloaded from: https://www.nomisweb.co.uk/census/2011/ukmig005 
+    # download > local authorities: district / unitary (prior to April 2015)
 health_dta <- s3read_using(import, 
                         object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/censusmig_health_LAD.csv') # File to open 
 
 dim(health_dta)      #43 variables, 406 observations
 
-
+# import shp data
+    #data were downloaded from https://geoportal.statistics.gov.uk/search?collection=Dataset&sort=name&tags=all(BDY_LAD%2CDEC_2011)
 save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.shp',
             file = here::here("shapefiles", "eng.shp"))
 save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.cpg',
@@ -53,9 +52,9 @@ lad_shp <- sf::st_read(here::here("shapefiles", "eng.shp"))
 
 str(lad_shp)
 
-# Drop Scotland and Northern Ireland
+# Drop Scotland and Northern Ireland in shp data
 lad_shp <- lad_shp %>%
-  subset(str_detect(lad11cd, 'E') | str_detect(lad11cd, 'W'))
+  subset(str_detect(lad11cd, '^E') | str_detect(lad11cd, '^W'))
 
 
 
@@ -63,13 +62,13 @@ lad_shp <- lad_shp %>%
 health_dta<-health_dta %>% 
   clean_names() 
 
-# Drop Scotland and NI
+# Drop Scotland and Northern Ireland in mobility data
 health_dta <- health_dta %>%
   subset(str_detect(geography_code, '^E') | str_detect(geography_code, '^W'))
 
 dim(health_dta)      #43 variables, 348 observations
 
-# replace name for Rhondda so it merges correctly
+# replace name for selected local authorities so they merge correctly
 health_dta <- health_dta %>%
   mutate(geography = replace(geography, geography == "Rhondda Cynon Taff", "Rhondda Cynon Taf"))
 health_dta <- health_dta %>%
@@ -78,14 +77,20 @@ health_dta <- health_dta %>%
   mutate(geography = replace(geography, geography == "Vale of Glamorgan", "The Vale of Glamorgan"))
 
 
-# naming unneeded colums x, y, z
+# renaming columns for same address (n_samead), moved within the local authority (n_movedwithin), inmigrants (n_inmig) and outmigrants (n_outmig)
+    # in each health status group
 names(health_dta)[4:10]<-c('n_samead', 'n_movedwithin' , 'n_inmig','x','y','z','n_outmig')
 names(health_dta)[14:20]<-c('n_samead_limlot', 'n_movedwithin_limlot' , 'n_inmig_limlot','x_limlot', 'y_limlot','z_limlot','n_outmig_limlot')
 names(health_dta)[24:30]<-c('n_samead_limlit', 'n_movedwithin_limlit' , 'n_inmig_limlit','x_limlit', 'y_limlit','z_limlit','n_outmig_limlit')
 names(health_dta)[34:40]<-c('n_samead_notlim', 'n_movedwithin_notlim' , 'n_inmig_notlim','x_notlim', 'y_notlim','z_notlim','n_outmig_notlim')
 
 
-# Create variables for usual residents in 2010 and 2011
+# Create variables for usual residents in 2010 and 2011, and net migration
+    #n_usualres11 = n_samead + n_movedwithin + n_inmig
+    #n_usualres10 = n_movedwithin + n_samead + n_outmig 
+    #mid_yearpop = (n_usualres10 + n_usualres11)/2
+    #net_migration= (n_inmig-n_outmig)/(mid_yearpop)*100
+
 cats <- c("limlot", "limlit", "notlim")
 
 for (cat in cats){
@@ -105,6 +110,8 @@ health_dta <- health_dta %>%
 clean_dta<-health_dta %>% 
   dplyr::select(c("date", "geography", "geography_code",contains(c("netmigration"))))
 
+
+# Classify local authorities based on over/under median net migration in each health status group across LAs
 
 summ(clean_dta$netmigration_limlot) # median net migration 0.232
 summ(clean_dta$netmigration_limlit) # median net migration 0.298
@@ -149,12 +156,13 @@ tabyl(clean_dta$health_mig)
 
 buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
 
-s3write_using(clean_dta # What R object we are saving
-              , FUN = write.csv # Which R function we are using to save
-              , object = 'health_net_migration_LA.csv' # Name of the file to save to (include file type)
+s3write_using(clean_dta # R object to save
+              , FUN = write.csv # R function used to save
+              , object = 'health_net_migration_LA.csv' # Name of file to save 
               , bucket = buck) # Bucket name defined above
 
 
+# Box plot of net migration by health status
 ea_dta_plot<-clean_dta %>% 
   dplyr::select(contains("netmigration")) %>% 
   pivot_longer(everything(), names_to="metric", values_to="net_migration")
@@ -164,9 +172,12 @@ t<-boxplot(net_migration~metric,data=ea_dta_plot, main="Net Migration by Health 
 
 
 
+# Calculate net migration by Levelling Up priority category
+    #note: this analysis was not included in the final piece
 # Import Levelling Up data
 buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping' ## my bucket name
 
+#data were downloaded from https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwjyroCDndj6AhWGUcAKHVAtCNsQFnoECAsQAQ&url=https%3A%2F%2Fassets.publishing.service.gov.uk%2Fgovernment%2Fuploads%2Fsystem%2Fuploads%2Fattachment_data%2Ffile%2F966137%2FLevelling_Up_Fund_list_of_local_authorities_by_priority_category.xlsx&usg=AOvVaw3NIQ1EBTwu0jLNSisnn3XT 
 levup <-s3read_using(import # Which function are we using to read
                      , object = 'data/Levelling_Up_priority_areas/Levelling_Up_Fund_list_of_local_authorities_by_priority_category.xlsx' # File to open
                      , bucket = buck) # Bucket name defined above
@@ -200,6 +211,7 @@ summary(subset(clean_dta, Priority.category == 2 & Country == 'England')$netmigr
 summary(subset(clean_dta, Priority.category == 3 & Country == 'England')$netmigration_notlim)
 
 
+# export data by Levelling Up category
 tibble_health <- clean_dta %>%
   dplyr::filter(Country == 'England') %>%
   group_by(levelling_up_priority = Priority.category) %>%
@@ -213,7 +225,6 @@ tibble_health <- clean_dta %>%
             q1_notlim = quantile(netmigration_notlim, 0.25),
             q3_notlim = quantile(netmigration_notlim, 0.75))
 tibble_health
-options(pillar.sigfig=3) # controls number of digits displayed, couldn't figure out how to limit to 2 decimal places in csv below
 
 s3write_using(tibble_health # What R object we are saving
               , FUN = write_csv # Which R function we are using to save
@@ -221,14 +232,15 @@ s3write_using(tibble_health # What R object we are saving
               , bucket = buck) # Bucket name defined above
 
 
+# Calculate net migration by IMD 
+    #note: this analysis was not included in the final piece
 # Import IMD data
 buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping' ## my bucket name
 
+#data were downloaded from https://www.gov.uk/government/statistics/english-indices-of-deprivation-2019
 imd <-s3read_using(import # Which function are we using to read
                    , object = 'data/IMD_LAD.xlsx' # File to open
                    , bucket = buck) # Bucket name defined above
-# Source: https://www.gov.uk/government/statistics/english-indices-of-deprivation-2019
-
 
 dim(imd)
 # 317 LAs in file
@@ -264,6 +276,7 @@ summary(subset(clean_dta, quintile == 1 & Country == 'England')$netmigration_not
 summary(subset(clean_dta, quintile == 5 & Country == 'England')$netmigration_notlim)
 
 
+# Export data by IMD quintile
 tibble_health2 <- clean_dta %>%
   dplyr::filter(Country == 'England') %>%
   group_by(quintile = quintile) %>%
@@ -277,7 +290,6 @@ tibble_health2 <- clean_dta %>%
             q1_notlim = quantile(netmigration_notlim, 0.25),
             q3_notlim = quantile(netmigration_notlim, 0.75))
 tibble_health2
-options(pillar.sigfig=3) # controls number of digits displayed, couldn't figure out how to limit to 2 decimal places in csv below
 
 s3write_using(tibble_health2 # What R object we are saving
               , FUN = write_csv # Which R function we are using to save
@@ -295,7 +307,6 @@ lad_shp <- left_join(lad_shp,clean_dta , by = c("lad11nm" = "geography"))
 pacman::p_load(sf,
                XML,
                tmap,
-               THFstyle,
                devtools, 
                viridis)
 
@@ -303,7 +314,8 @@ pacman::p_load(sf,
 buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/outputs' ## my bucket name
 
 
-map15_1 <- tm_shape(lad_shp) +
+# Map 1 - LAs above/below median net migration for "limited a lot"
+map2_1 <- tm_shape(lad_shp) +
   tm_borders(,alpha=0) +
   tm_fill(col = "above_median_limlot",  style = "cat", palette = c('#53a9cd', '#dd0031'), title = "Net migration above/below median - limited a lot",
           labels = c("Below median", "Above median"))   +
@@ -312,9 +324,11 @@ map15_1 <- tm_shape(lad_shp) +
             legend.position = c("left","top"),
             legend.bg.color = "white",
             legend.bg.alpha = 1) 
-map15_1
+map2_1
 
-map15_2 <- tm_shape(lad_shp) +
+
+# Map 2 - above/below median net migration for "limited a little"
+map2_2 <- tm_shape(lad_shp) +
   tm_borders(,alpha=0) +
   tm_fill(col = "above_median_limlit",  style = "cat", palette = c('#53a9cd', '#dd0031'), title = "Net migration above/below median - limited a little",
           labels = c("Below median", "Above median"))   +
@@ -323,10 +337,11 @@ map15_2 <- tm_shape(lad_shp) +
             legend.position = c("left","top"),
             legend.bg.color = "white",
             legend.bg.alpha = 1) 
-map15_2
+map2_2
 
 
-map15_3 <-  tm_shape(lad_shp) +
+# Map 3 - above/below median for "not limited"
+map2_3 <-  tm_shape(lad_shp) +
   tm_borders(,alpha=0) +
   tm_fill(col = "above_median_notlim",  style = "cat", palette = c('#53a9cd', '#dd0031'), title = "Net migration above/below median - not limited",
           labels = c("Below median", "Above median"))   +
@@ -335,10 +350,11 @@ map15_3 <-  tm_shape(lad_shp) +
             legend.position = c("left","top"),
             legend.bg.color = "white",
             legend.bg.alpha = 1) 
-map15_3
+map2_3
 
 
-map15_4 <- tm_shape(lad_shp) +
+# Map 4 - classification of LAs by residential mobility by health status
+map2_4 <- tm_shape(lad_shp) +
   tm_borders(,alpha=0) +
   tm_fill(col = "health_mig",  style = "cat", palette = c('#F39214', '#744284', '#53a9cd', '#dd0031'), title = "Mobility by health status") +
   tm_layout(legend.title.size = 0.8,
@@ -346,7 +362,7 @@ map15_4 <- tm_shape(lad_shp) +
             legend.position = c("left","top"),
             legend.bg.color = "white",
             legend.bg.alpha = 1)
-map15_4
+map2_4
 
 
 
@@ -355,7 +371,8 @@ ldn_lad_shp <- lad_shp %>%
   dplyr::filter(, substring(lad11cd, 1, 3) == 'E09' & str_detect(lad11cd, 'E')) 
 
 
-map15_5<- tm_shape(ldn_lad_shp) +
+# Map 5 - above/below median for "limited a lot" - London
+map2_5<- tm_shape(ldn_lad_shp) +
   tm_borders(,alpha=0) +
   tm_fill(col = "above_median_limlot",  style = "cat", palette = c('#53a9cd', '#dd0031'), title = "Net migration above/below median - limited a lot",
           labels = c("Below median", "Above median"))   +
@@ -364,11 +381,11 @@ map15_5<- tm_shape(ldn_lad_shp) +
             legend.position = c("left","top"),
             legend.bg.color = "white",
             legend.bg.alpha = 1) 
-map15_5
+map2_5
 
 
-
-map15_6 <- tm_shape(ldn_lad_shp) +
+# Map 6 - above/below median for "limited a little" - London
+map2_6 <- tm_shape(ldn_lad_shp) +
   tm_borders(,alpha=0) +
   tm_fill(col = "above_median_limlit",  style = "cat", palette = c('#53a9cd', '#dd0031'), title = "Net migration above/below median - limited a little",
           labels = c("Below median", "Above median"))   +
@@ -377,12 +394,12 @@ map15_6 <- tm_shape(ldn_lad_shp) +
             legend.position = c("left","top"),
             legend.bg.color = "white",
             legend.bg.alpha = 1) 
-map15_6
+map2_6
 
 
 
-
-map15_7<- tm_shape(ldn_lad_shp) +
+# Map 7 - above/below median for "not limited" - London
+map2_7<- tm_shape(ldn_lad_shp) +
   tm_borders(,alpha=0) +
   tm_fill(col = "above_median_notlim",  style = "cat", palette = c('#53a9cd', '#dd0031'), title = "Net migration above/below median - not limited",
           labels = c("Below median", "Above median"))   +
@@ -392,11 +409,11 @@ map15_7<- tm_shape(ldn_lad_shp) +
             legend.bg.color = "white",
             legend.bg.alpha = 1) 
 
-map15_7
+map2_7
 
 
-
-map15_8<- tm_shape(ldn_lad_shp) +
+# Map 8 - classification of LAs by residential mobility by health status - London
+map2_8<- tm_shape(ldn_lad_shp) +
   tm_borders(,alpha=0) +
   tm_fill(col = "health_mig", palette = "viridis", title = "Not limited in daily activities Net migration (%)") +
   tm_layout(legend.title.size = 0.8,
@@ -405,5 +422,5 @@ map15_8<- tm_shape(ldn_lad_shp) +
             legend.bg.color = "white",
             legend.bg.alpha = 1)
 
-map15_8
+map2_8
 
