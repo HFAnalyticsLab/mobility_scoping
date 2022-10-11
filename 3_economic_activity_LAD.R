@@ -1,32 +1,35 @@
-## Preliminary maps - economic mobility data prep - LAD level
+## Preliminary maps - economic mobility data prep - by Local Authority District
 
-  #NOTE: FC made this one based on AA's script 16 using the LA-level data download directly
-              # (rather than lookup table to aggregate MSOAs into LAs)
-              # this was to ensure comparability with age and health re: 5 LAs which had problems merging
-              # net migration estimates are identical to those obtained in script 16 for the merged LAs
+  #NOTE: script S14 does the same analysis using MSOA-level data aggregated into LAs
+              # 5 LAs had issues merging 
+              # net migration estimates are identical to those obtained in script S14 for the merged LAs
 
 
-# Housekeeping
 # clear R environment
 rm(list = ls())
 
 
 #load packages
-pacman::p_load(sf,
-               XML,
-               tmap,
-               THFstyle,
-               viridis, 
-               wesanderson,
-               aws.s3,
-               tidyverse,
-               rio,
+pacman::p_load(haven, 
+               dplyr, 
+               survey, 
                janitor,
-               ggmap)
+               questionr, 
+               epiDisplay, 
+               epirhandbook,
+               rio, 
+               ggplot2, 
+               apyramid,
+               magrittr, 
+               stringr, 
+               here, 
+               aws.s3,
+               readr,
+               matrixStats)
 
 
-# import all data
-## data were downloaded from: https://www.nomisweb.co.uk/census/2011/ukmig006
+# data were downloaded from: https://www.nomisweb.co.uk/census/2011/ukmig006
+        # download > local authorities: district / unitary (prior to April 2015)
 EA_dta <- s3read_using(import, 
                        object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/censusmig_economicactivity_LAD.csv') # File to open 
 
@@ -47,6 +50,8 @@ clean_dta<-EA_dta %>%
 grps<-c("ea_full_time_employment", "ea_part_time_eployment", "ea_unemployed", "ei_retired", "ei_looking_after", "ei_lt_sick_disabled", "ei_other")
 
 
+# renaming columns for same address (n_samead), moved within the local authority (n_movedwithin), inmigrants (n_inmig) and outmigrants (n_outmig)
+    # in each economic activity group
 names(clean_dta)[4:10]<-paste0(grps,"_n_samead")
 names(clean_dta)[11:17]<-paste0(grps,"_n_inmig")
 names(clean_dta)[18:24]<-paste0(grps,"_n_outmig")
@@ -130,7 +135,7 @@ ea_dta <- ea_dta %>%
   subset(str_detect(geography_code, '^E') | str_detect(geography_code, '^W'))
 
 summary(ea_dta$ea_netmigration) #med = 1.016
-summary(ea_dta$ei_netmigration) # med = 0.574
+summary(ea_dta$ei_netmigration) # med = 0.575
 summary(ea_dta$ea_student_netmigration) # med = -6.958
 summary(ea_dta$ei_student_netmigration) # med = -7.804
 summary(ea_dta$student_netmigration) #-7.243
@@ -140,14 +145,14 @@ summary(ea_dta$student_netmigration) #-7.243
 
 ea_dta <- ea_dta %>%
   mutate(EA_mig = case_when(
-    ea_netmigration <=1.016 & ei_netmigration <=0.574 & student_netmigration <=-7.243 ~ "Below median net migration - all groups",
-    ea_netmigration >1.016 & ei_netmigration >0.574 &student_netmigration> -7.243 ~ "Above median net migration - all groups",
-    ea_netmigration >1.016 & ei_netmigration <=0.574 &student_netmigration<= -7.243~ "Above median net migration - Economically active",
-    ea_netmigration <=1.016 & ei_netmigration >0.574 &student_netmigration<= -7.243 ~ "Above median net migration - Economically inactive", 
-    ea_netmigration <=1.016 & ei_netmigration <=0.574 &student_netmigration> -7.243 ~ "Above median net migration - Students",
-    ea_netmigration <=1.016 & ei_netmigration >0.574 &student_netmigration> -7.243 ~ "Below median net migration - Economically active only",
-    ea_netmigration >1.016 & ei_netmigration <=0.574 &student_netmigration> -7.243 ~ "Below median net migration - Economically inactive only",
-    ea_netmigration >1.016 & ei_netmigration >0.574 &student_netmigration<= -7.243 ~ "Below median net migration - Students only"))
+    ea_netmigration <=1.016 & ei_netmigration <=0.575 & student_netmigration <=-7.243 ~ "Below median net migration - all groups",
+    ea_netmigration >1.016 & ei_netmigration >0.575 &student_netmigration> -7.243 ~ "Above median net migration - all groups",
+    ea_netmigration >1.016 & ei_netmigration <=0.575 &student_netmigration<= -7.243~ "Above median net migration - Economically active",
+    ea_netmigration <=1.016 & ei_netmigration >0.575 &student_netmigration<= -7.243 ~ "Above median net migration - Economically inactive", 
+    ea_netmigration <=1.016 & ei_netmigration <=0.575 &student_netmigration> -7.243 ~ "Above median net migration - Students",
+    ea_netmigration <=1.016 & ei_netmigration >0.575 &student_netmigration> -7.243 ~ "Below median net migration - Economically active only",
+    ea_netmigration >1.016 & ei_netmigration <=0.575 &student_netmigration> -7.243 ~ "Below median net migration - Economically inactive only",
+    ea_netmigration >1.016 & ei_netmigration >0.575 &student_netmigration<= -7.243 ~ "Below median net migration - Students only"))
 
 tabyl(ea_dta$EA_mig)
 
@@ -156,16 +161,19 @@ tabyl(ea_dta$EA_mig)
 # Save data
 buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
 
-s3write_using(ea_dta # What R object we are saving
-              , FUN = write.csv # Which R function we are using to save
-              , object = 'ea_with_students_net_migration_LAD_v2.csv' # Name of the file to save to (include file type)
+s3write_using(ea_dta # R object to be saved
+              , FUN = write.csv # R function used to save
+              , object = 'ea_with_students_net_migration_LAD_v2.csv' # Name of file to save 
               , bucket = buck) # Bucket name defined above
 
 
 
+# Calculate net migration by Levelling Up priority category
+    #note: this analysis was not included in the final piece
 # Import Levelling Up data
 buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping' ## my bucket name
 
+#data were downloaded from https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwjyroCDndj6AhWGUcAKHVAtCNsQFnoECAsQAQ&url=https%3A%2F%2Fassets.publishing.service.gov.uk%2Fgovernment%2Fuploads%2Fsystem%2Fuploads%2Fattachment_data%2Ffile%2F966137%2FLevelling_Up_Fund_list_of_local_authorities_by_priority_category.xlsx&usg=AOvVaw3NIQ1EBTwu0jLNSisnn3XT 
 levup <-s3read_using(import # Which function are we using to read
                      , object = 'data/Levelling_Up_priority_areas/Levelling_Up_Fund_list_of_local_authorities_by_priority_category.xlsx' # File to open
                      , bucket = buck) # Bucket name defined above
@@ -199,6 +207,7 @@ summary(subset(ea_dta, Priority.category == 2 & Country == 'England')$student_ne
 summary(subset(ea_dta, Priority.category == 3 & Country == 'England')$student_netmigration)
 
 
+# export data by Levelling Up category
 tibble_ea <- ea_dta %>%
   dplyr::filter(Country == 'England') %>%
   group_by(levelling_up_priority = Priority.category) %>%
@@ -212,7 +221,6 @@ tibble_ea <- ea_dta %>%
             q1_student = quantile(student_netmigration, 0.25),
             q3_student = quantile(student_netmigration, 0.75))
 tibble_ea
-options(pillar.sigfig=3) # controls number of digits displayed, couldn't figure out how to limit to 2 decimal places in csv below
 
 s3write_using(tibble_ea # What R object we are saving
               , FUN = write_csv # Which R function we are using to save
@@ -220,9 +228,12 @@ s3write_using(tibble_ea # What R object we are saving
               , bucket = buck) # Bucket name defined above
 
 
+# Calculate net migration by IMD 
+    #note: this analysis was not included in the final piece
 # Import IMD data
 buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping' ## my bucket name
 
+#data were downloaded from https://www.gov.uk/government/statistics/english-indices-of-deprivation-2019
 imd <-s3read_using(import # Which function are we using to read
                    , object = 'data/IMD_LAD.xlsx' # File to open
                    , bucket = buck) # Bucket name defined above
@@ -263,8 +274,9 @@ summary(subset(ea_dta, quintile == 1 & Country == 'England')$student_netmigratio
 summary(subset(ea_dta, quintile == 5 & Country == 'England')$student_netmigration)
 
 
-tibble_ea2 <- clean_dta %>%
-  dplyr::filter(Country == 'England') %>%
+# Export data by IMD quintile
+tibble_ea2 <- ea_dta %>%
+  dplyr::filter(str_detect(geography_code, '^E') ) %>%
   group_by(quintile = quintile) %>%
   summarise(med_netmigration_ea = median(ea_netmigration),
             q1_ea = quantile(ea_netmigration, 0.25),
@@ -276,7 +288,6 @@ tibble_ea2 <- clean_dta %>%
             q1_student = quantile(student_netmigration, 0.25),
             q3_student = quantile(student_netmigration, 0.75))
 tibble_ea2
-options(pillar.sigfig=3) # controls number of digits displayed, couldn't figure out how to limit to 2 decimal places in csv below
 
 s3write_using(tibble_ea2 # What R object we are saving
               , FUN = write_csv # Which R function we are using to save
@@ -295,6 +306,7 @@ pacman::p_load(sf,
                viridis)
 
 # import shp data
+    #data were downloaded from https://geoportal.statistics.gov.uk/search?collection=Dataset&sort=name&tags=all(BDY_LAD%2CDEC_2011)
 save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.shp',
             file = here::here("shapefiles", "eng.shp"))
 save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.cpg',
@@ -315,9 +327,9 @@ str(lad_shp)
 
 # Drop Scotland and Northern Ireland
 lad_shp <- lad_shp %>%
-  subset(str_detect(lad11cd, 'E') | str_detect(lad11cd, 'W'))
+  subset(str_detect(lad11cd, '^E') | str_detect(lad11cd, '^W'))
 
-# replace name for Rhondda so it merges correctly
+# replace name for selected local authorities so they merge correctly
 ea_dta <- ea_dta %>%
   mutate(geography = replace(geography, geography == "Rhondda Cynon Taff", "Rhondda Cynon Taf"))
 ea_dta <- ea_dta %>%
@@ -329,8 +341,8 @@ ea_dta <- ea_dta %>%
 lad_shp <- left_join(lad_shp, ea_dta, by = c("lad11nm" = "geography"))
 
 
-# Map of age migration classification
-map16b_1 <- tm_shape(lad_shp) +
+# Map of economic activity residential mobility classification
+map3_1 <- tm_shape(lad_shp) +
   tm_borders(, alpha=0) +
   tm_fill(col = "EA_mig", style = "cat", palette =  c('#53a9cd', '#2a7979', '#F39214', '#744284',  '#dd0031', '#ee9b90', '#0c402b', '#a6d7d3'), title = "") +
   tm_layout(legend.title.size = 1,
@@ -338,4 +350,4 @@ map16b_1 <- tm_shape(lad_shp) +
             legend.position = c("left","top"),
             legend.bg.color = "white",
             legend.bg.alpha = 1)
-map16b_1
+map3_1
