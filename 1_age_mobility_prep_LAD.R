@@ -1,6 +1,5 @@
-## Preparing area-level mobility data, breakdown by age - LAD
+## Preparing area-level mobility data, breakdown by age - by Local Authority District
 
-# Housekeeping
 # clear R environment
 rm(list = ls())
 
@@ -12,7 +11,6 @@ pacman::p_load(haven,
                janitor,
                questionr, 
                epiDisplay, 
-               epirhandbook,
                rio, 
                ggplot2, 
                apyramid,
@@ -25,25 +23,27 @@ pacman::p_load(haven,
 
 
 ## data were downloaded from: https://www.nomisweb.co.uk/census/2011/ukmig001
+      # download > local authorities: district / unitary (prior to April 2015)
 age_dta <- s3read_using(import, 
                         object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/censusmig_age_sex_LAD.csv') # File to open 
 
 dim(age_dta)      #303 variables, 406 observations
 
 
-# tidy variables names
+# tidy variable names
 age_dta<-age_dta %>% 
   clean_names() 
-#remove spaces so that we can refer to column names in functions]
+#remove spaces so that we can refer to column names in functions
 
-# Drop Scotland and NI
+# Drop Scotland and Northern Ireland
 age_dta <- age_dta %>%
   subset(str_detect(geography_code, '^E') | str_detect(geography_code, '^W'))
 
 dim(age_dta)      #43 variables, 348 observations
 
 
-# naming second column x until figured out what it  means
+# renaming columns for same address (n_samead), moved within the local authority (n_movedwithin), inmigrants (n_inmig) and outmigrants (n_outmig)
+    # in each age group
 names(age_dta)[4:10]<-c('n_samead', 'n_movedwithin' , 'n_inmig','x','y','z','n_outmig')
 names(age_dta)[14:20]<-c('n_samead_0_4', 'n_movedwithin_0_4' , 'n_inmig_0_4','x_0_4', 'y_0_4','z_0_4','n_outmig_0_4')
 names(age_dta)[24:30]<-c('n_samead_5_15', 'n_movedwithin_5_15' , 'n_inmig_5_15','x_5_15', 'y_5_15','z_5_15','n_outmig_5_15')
@@ -56,7 +56,12 @@ names(age_dta)[84:90]<-c('n_samead_65_74', 'n_movedwithin_65_74' , 'n_inmig_65_7
 names(age_dta)[94:100]<-c('n_samead_75p', 'n_movedwithin_75p' , 'n_inmig_75p','x_75p','y_75p','z_75p','n_outmig_75p')
 
 
-# Create variables for usual residents in 2010 and 2011
+# Create variables for usual residents in 2010 and 2011, and midyear population in each Local Authority
+    #n_usualres11 = n_samead + n_movedwithin + n_inmig
+    #n_usualres10 = n_movedwithin + n_samead + n_outmig 
+    #mid_yearpop = (n_usualres10 + n_usualres11)/2
+
+
 ages <- c("0_4", "5_15", "16_19", "20_24", "25_34", "35_49", "50_64", "65_74", "75p")
 
 for (age in ages){
@@ -75,10 +80,11 @@ age_dta <- age_dta %>%
          n_usualres11 = n_samead + n_inmig + n_movedwithin,
          n_midyrpop = (n_usualres10 + n_usualres11)/2)
 
-# construct variables for three main age groups
+# construct variables for three main age groups used in analysis (0-35, 35-64, 65+)
+
 under_34<-c("0_4", "5_15", "16_19","20_24", "25_34")
 x35_to_64<-c("35_49","50_64")
-x65plus<-c("65_64","75p")
+x65plus<-c("65_74","75p")
 
 
 age_dta <- age_dta %>% 
@@ -108,13 +114,10 @@ age_dta <- age_dta %>%
   dplyr::select(c("geography", "geography_code",contains(c("under_34","x35_to_64","x65plus"))))
 
 
-#n_movedwithin= within_same_area
-#n_usualres10= n_movedwithin+ n_samead+ n_outmig 
-#mid_yearpop= (n_usualres10+n_usualres11)/2
 
-#work out net migration 
-#net_migration= (n_inmig-n_outmig)/(mid_yearpop)*1000
 
+# Calculate net migration for each age group
+    #net_migration= (n_inmig-n_outmig)/(mid_yearpop)*100
 
 age_dta<-age_dta %>% 
   mutate(under_34_netmigration=(under_34_inmig-under_34_outmig)/(under_34_midyearpop)*100,
@@ -122,29 +125,20 @@ age_dta<-age_dta %>%
          x65plus_netmigration=(x65plus_inmig-x65plus_outmig)/(x65plus_midyearpop)*100)
 
 
-# attempt classification based on Jay's cluster analysis
-# OLD definition
-#age_dta <- age_dta %>%
- # mutate(age_mig = case_when(
-#              under_34_netmigration <=0 & x35_to_64_netmigration <=0 & x65plus_netmigration <=0 ~ "General outmigration",
- #             under_34_netmigration >0 & x65plus_netmigration >0 ~ "General inmigration",
-  #            under_34_netmigration >0 & x65plus_netmigration <=0 ~ "Younger inmigration",
-   #           under_34_netmigration <=0 & x65plus_netmigration >0 ~ "Older inmigration",
-    #          under_34_netmigration <=0 & x35_to_64_netmigration >0 ~ "Older inmigration"))
+# Classify local authorities based on over/under median net migration in each age group across LAs
 
-
-# New definition - based on over/under median net migration across LAs
-summ(age_dta$under_34_netmigration) # median 0.465
-summ(age_dta$x35_to_64_netmigration) # median 0.659
-summ(age_dta$x65plus_netmigration) # median 0.159
+#median net migration in each age group across LAs
+summ(age_dta$under_34_netmigration) # median 0.531
+summ(age_dta$x35_to_64_netmigration) # median 0.671
+summ(age_dta$x65plus_netmigration) # median 0.196
 
 age_dta <- age_dta %>%
  mutate(age_mig = case_when(
-              under_34_netmigration <=0.465 & x35_to_64_netmigration <=0.659 & x65plus_netmigration <=0.159 ~ "Below median net migration - all age groups",
-              under_34_netmigration >0.465 & x65plus_netmigration >0.159 ~ "Above median net migration - all age groups",
-              under_34_netmigration >0.465 & x65plus_netmigration <=0.159 ~ "Above median net migration - younger",
-              under_34_netmigration <=0.465 & x65plus_netmigration >0.159 ~ "Above median net migration - older", 
-              under_34_netmigration <=0.465 & x35_to_64_netmigration>0.659 & x65plus_netmigration<0.159 ~ "Above median net migration - middle age only"))
+              under_34_netmigration <=0.531 & x35_to_64_netmigration <=0.671 & x65plus_netmigration <=0.196 ~ "Below median net migration - all age groups",
+              under_34_netmigration >0.531 & x65plus_netmigration >0.196 ~ "Above median net migration - all age groups",
+              under_34_netmigration >0.531 & x65plus_netmigration <=0.196 ~ "Above median net migration - younger",
+              under_34_netmigration <=0.531 & x65plus_netmigration >0.196 ~ "Above median net migration - older", 
+              under_34_netmigration <=0.531 & x35_to_64_netmigration>0.671 & x65plus_netmigration<0.196 ~ "Above median net migration - middle age only"))
 
 tabyl(age_dta$age_mig)
 
@@ -155,16 +149,19 @@ clean_dta<-age_dta %>%
 
 buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
 
-s3write_using(age_dta # What R object we are saving
-              , FUN = write.csv # Which R function we are using to save
-              , object = 'age_net_migration_LA.csv' # Name of the file to save to (include file type)
+s3write_using(age_dta # R object to save
+              , FUN = write.csv # function used to save
+              , object = 'age_net_migration_LA.csv' # Name of file to save 
               , bucket = buck) # Bucket name defined above
 
 
+# Calculate net migration by Levelling Up priority category
+    #note: this analysis was not included in the final piece
 # Import Levelling Up data
 buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping' ## my bucket name
 
-levup <-s3read_using(import # Which function are we using to read
+#data were downloaded from https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwjyroCDndj6AhWGUcAKHVAtCNsQFnoECAsQAQ&url=https%3A%2F%2Fassets.publishing.service.gov.uk%2Fgovernment%2Fuploads%2Fsystem%2Fuploads%2Fattachment_data%2Ffile%2F966137%2FLevelling_Up_Fund_list_of_local_authorities_by_priority_category.xlsx&usg=AOvVaw3NIQ1EBTwu0jLNSisnn3XT 
+levup <-s3read_using(import # function used to read
                      , object = 'data/Levelling_Up_priority_areas/Levelling_Up_Fund_list_of_local_authorities_by_priority_category.xlsx' # File to open
                      , bucket = buck) # Bucket name defined above
 
@@ -197,6 +194,7 @@ summary(subset(age_dta, Priority.category == 2 & Country == 'England')$x65plus_n
 summary(subset(age_dta, Priority.category == 3 & Country == 'England')$x65plus_netmigration)
 
 
+# export data by Levelling Up category
 tibble_age1 <- age_dta %>%
   dplyr::filter(Country == 'England') %>%
   group_by(levelling_up_priority = Priority.category) %>%
@@ -210,7 +208,6 @@ tibble_age1 <- age_dta %>%
             q1_65plus = quantile(x65plus_netmigration, 0.25),
             q3_65plus = quantile(x65plus_netmigration, 0.75))
 tibble_age1
-options(pillar.sigfig=3) # controls number of digits displayed, couldn't figure out how to limit to 2 decimal places in csv below
 
 s3write_using(tibble_age1 # What R object we are saving
               , FUN = write_csv # Which R function we are using to save
@@ -218,14 +215,17 @@ s3write_using(tibble_age1 # What R object we are saving
               , bucket = buck) # Bucket name defined above
 
 
+
+
+# Calculate net migration by IMD 
+    #note: this analysis was not included in the final piece
 # Import IMD data
 buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping' ## my bucket name
-
+ 
+#data were downloaded from https://www.gov.uk/government/statistics/english-indices-of-deprivation-2019
 imd <-s3read_using(import # Which function are we using to read
                      , object = 'data/IMD_LAD.xlsx' # File to open
                      , bucket = buck) # Bucket name defined above
-    # Source: https://www.gov.uk/government/statistics/english-indices-of-deprivation-2019
-
 
 dim(imd)
 # 317 LAs in file
@@ -249,13 +249,6 @@ imd <- imd %>%
 age_dta <- left_join(age_dta, imd, by = c("geography" = "local_authority_district_name_2019"))
 
 
-### code which didn't work 
-age_dta <- age_dta %>%
-  mutate(quintile2 = cut(imd_rank_of_average_rank,
-                        breaks = quantile(imd_rank_of_average_rank, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1, NA)),
-                        na.rm = TRUE))
-
-
 # calculate net migration by age for top and bottom IMD quintiles
 summary(subset(age_dta, quintile == 1 & Country == 'England')$under_34_netmigration)
 summary(subset(age_dta, quintile == 5 & Country == 'England')$under_34_netmigration)
@@ -267,6 +260,7 @@ summary(subset(age_dta, quintile == 1 & Country == 'England')$x65plus_netmigrati
 summary(subset(age_dta, quintile == 5 & Country == 'England')$x65plus_netmigration)
 
 
+# Export data by IMD quintile
 tibble_age2 <- age_dta %>%
   dplyr::filter(Country == 'England') %>%
   group_by(quintile = quintile) %>%
@@ -280,7 +274,6 @@ tibble_age2 <- age_dta %>%
             q1_65plus = quantile(x65plus_netmigration, 0.25),
             q3_65plus = quantile(x65plus_netmigration, 0.75))
 tibble_age2
-options(pillar.sigfig=3) # controls number of digits displayed, couldn't figure out how to limit to 2 decimal places in csv below
 
 s3write_using(tibble_age2 # What R object we are saving
               , FUN = write_csv # Which R function we are using to save
@@ -288,15 +281,18 @@ s3write_using(tibble_age2 # What R object we are saving
               , bucket = buck) # Bucket name defined above
 
 
+# Make maps of net migration by age
 
 # load packages
 pacman::p_load(sf,
                XML,
                tmap,
-               THFstyle,
                devtools)
 
+
 # import shp data
+    #data were downloaded from https://geoportal.statistics.gov.uk/search?collection=Dataset&sort=name&tags=all(BDY_LAD%2CDEC_2011)
+
 save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.shp',
             file = here::here("shapefiles", "eng.shp"))
 save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.cpg',
@@ -317,9 +313,9 @@ str(lad_shp)
 
 # Drop Scotland and Northern Ireland
 lad_shp <- lad_shp %>%
-  subset(str_detect(lad11cd, 'E') | str_detect(lad11cd, 'W'))
+  subset(str_detect(lad11cd, '^E') | str_detect(lad11cd, '^W'))
 
-# replace name for Rhondda so it merges correctly
+# replace name for a few local authorities so they merge correctly
   age_dta <- age_dta %>%
     mutate(geography = replace(geography, geography == "Rhondda Cynon Taff", "Rhondda Cynon Taf"))
   age_dta <- age_dta %>%
@@ -332,7 +328,7 @@ lad_shp <- left_join(lad_shp, age_dta, by = c("lad11nm" = "geography"))
 
 
 # Map of age migration classification
-map12_1 <- tm_shape(lad_shp) +
+map1_1 <- tm_shape(lad_shp) +
   tm_borders(, alpha=0) +
   tm_fill(col = "age_mig", style = "cat", palette = c('#53a9cd', '#2a7979', '#F39214', '#744284',  '#dd0031'), title = "Mobility by age") +
   tm_layout(legend.title.size = 1,
@@ -340,9 +336,9 @@ map12_1 <- tm_shape(lad_shp) +
             legend.position = c("left","top"),
             legend.bg.color = "white",
             legend.bg.alpha = 1)
-map12_1
-s3write_using(map12_1 # What R object we are saving
-              , FUN = tmap_save # Which R function we are using to save
-              , object = 'outputs/map12_1_age_netmigration.tiff' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+map1_1
+s3write_using(map1_1 # R object to save
+              , FUN = tmap_save # R function used to save
+              , object = 'outputs/map12_1_age_netmigration.tiff' # Name of file to save 
+              , bucket = buck) # Bucket name defined above  
 
