@@ -1,5 +1,7 @@
 ## Cluster analysis of residential mobility factors
 ## JH 26/07/2021
+      # Note: this is the initial script for the cluster analysis
+      # the updated script can be found under script 4
 
 # clear R environment
 rm(list = ls())
