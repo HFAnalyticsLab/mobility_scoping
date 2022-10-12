@@ -128,23 +128,27 @@ age_dta<-age_dta %>%
          x65plus_netmigration=(x65plus_inmig-x65plus_outmig)/(x65plus_midyearpop)*100)
 
 
-# Classify local authorities based on over/under median net migration in each age group across LAs
+# Classify local authorities based on over/under migration in each age group across LAs -----------
+
 
 #median net migration in each age group across LAs
 summ(age_dta$under_34_netmigration) # median 0.531
 summ(age_dta$x35_to_64_netmigration) # median 0.671
 summ(age_dta$x65plus_netmigration) # median 0.196
 
+a<-median(age_dta$under_34_netmigration)
+b<-median(age_dta$x35_to_64_netmigration)
+c<-median(age_dta$x65plus_netmigration)
+
 age_dta <- age_dta %>%
  mutate(age_mig = case_when(
-              under_34_netmigration <=0.531 & x35_to_64_netmigration <=0.671 & x65plus_netmigration <=0.196 ~ "Below median net migration - all age groups",
-              under_34_netmigration >0.531 & x65plus_netmigration >0.196 ~ "Above median net migration - all age groups",
-              under_34_netmigration >0.531 & x65plus_netmigration <=0.196 ~ "Above median net migration - younger",
-              under_34_netmigration <=0.531 & x65plus_netmigration >0.196 ~ "Above median net migration - older", 
-              under_34_netmigration <=0.531 & x35_to_64_netmigration>0.671 & x65plus_netmigration<0.196 ~ "Above median net migration - middle age only"))
+              under_34_netmigration <=a & x35_to_64_netmigration <=b & x65plus_netmigration <=c ~ "Below median net migration - all age groups",
+              under_34_netmigration >a & x65plus_netmigration >c ~ "Above median net migration - all age groups",
+              under_34_netmigration >a & x65plus_netmigration <=c ~ "Above median net migration - younger",
+              under_34_netmigration <=a & x65plus_netmigration >c ~ "Above median net migration - older", 
+              under_34_netmigration <=a & x35_to_64_netmigration>b & x65plus_netmigration<c ~ "Above median net migration - middle age only"))
 
 tabyl(age_dta$age_mig)
-
 
 # Save data
 clean_dta<-age_dta %>% 
@@ -156,8 +160,9 @@ s3write_using(age_dta # R object to save
               , bucket = buck_clean) # Bucket name
 
 
-# Calculate net migration by Levelling Up priority category
-    #note: this analysis was not included in the final piece
+
+# Calculate net migration by Levelling Up priority category ---------------
+#note: this analysis was not included in the final piece
 # Import Levelling Up data
     #data were downloaded from https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwjyroCDndj6AhWGUcAKHVAtCNsQFnoECAsQAQ&url=https%3A%2F%2Fassets.publishing.service.gov.uk%2Fgovernment%2Fuploads%2Fsystem%2Fuploads%2Fattachment_data%2Ffile%2F966137%2FLevelling_Up_Fund_list_of_local_authorities_by_priority_category.xlsx&usg=AOvVaw3NIQ1EBTwu0jLNSisnn3XT 
 levup <-s3read_using(import # function used to read
@@ -216,7 +221,7 @@ s3write_using(tibble_age1 # What R object we are saving
 
 
 
-# Calculate net migration by IMD 
+# Calculate net migration by IMD  -----------------------------------------
     #note: this analysis was not included in the final piece
 # Import IMD data
     #data were downloaded from https://www.gov.uk/government/statistics/english-indices-of-deprivation-2019
@@ -278,8 +283,7 @@ s3write_using(tibble_age2 # What R object we are saving
               , bucket = buck_main) # Bucket name 
 
 
-# Make maps of net migration by age
-
+# Make maps of net migration by age ---------------------------------------
 # load packages
 pacman::p_load(sf,
                XML,
@@ -340,6 +344,8 @@ map1_1 <- tm_shape(lad_shp) +
             legend.bg.color = "white",
             legend.bg.alpha = 1)
 map1_1
+
+
 s3write_using(map1_1 # R object to save
               , FUN = tmap_save # R function used to save
               , object = 'outputs/map12_1_age_netmigration.tiff' # Name of file to save 
