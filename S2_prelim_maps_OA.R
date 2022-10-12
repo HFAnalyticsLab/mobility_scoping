@@ -4,6 +4,9 @@
 # clear R environment
 rm(list = ls())
 
+# run script with bucket names
+source("0_file_pathways.R") 
+
 # load packages
 library(aws.s3)
 pacman::p_load(haven, 
@@ -27,22 +30,26 @@ pacman::p_load(haven,
                THFstyle,
                dplyr)
 
-# read OA boundaries
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping' ## my bucket name
 
 # import shp data
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/OA_shapefile_data/Output_Areas__December_2011__Boundaries_EW_BFC.shp',
-            file = here::here("shapefiles", "eng.shp"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/OA_shapefile_data/Output_Areas__December_2011__Boundaries_EW_BFC.cpg',
-            file = here::here("shapefiles", "eng.cpg"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/OA_shapefile_data/Output_Areas__December_2011__Boundaries_EW_BFC.dbf',
-            file = here::here("shapefiles", "eng.dbf"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/OA_shapefile_data/Output_Areas__December_2011__Boundaries_EW_BFC.prj',
-            file = here::here("shapefiles", "eng.prj"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/OA_shapefile_data/Output_Areas__December_2011__Boundaries_EW_BFC.shx',
-            file = here::here("shapefiles", "eng.shx"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/OA_shapefile_data/Output_Areas__December_2011__Boundaries_EW_BFC.xml',
-            file = here::here("shapefiles", "eng.xml"))
+save_object(object = 'OA_shapefile_data/Output_Areas__December_2011__Boundaries_EW_BFC.shp',
+            file = here::here("shapefiles", "eng.shp"), 
+            bucket = buck_data)
+save_object(object = 'OA_shapefile_data/Output_Areas__December_2011__Boundaries_EW_BFC.cpg',
+            file = here::here("shapefiles", "eng.cpg"), 
+            bucket = buck_data)
+save_object(object = 'OA_shapefile_data/Output_Areas__December_2011__Boundaries_EW_BFC.dbf',
+            file = here::here("shapefiles", "eng.dbf"), 
+            bucket = buck_data)
+save_object(object = 'OA_shapefile_data/Output_Areas__December_2011__Boundaries_EW_BFC.prj',
+            file = here::here("shapefiles", "eng.prj"),
+            bucket = buck_data)
+save_object(object = 'OA_shapefile_data/Output_Areas__December_2011__Boundaries_EW_BFC.shx',
+            file = here::here("shapefiles", "eng.shx"), 
+            bucket = buck_data)
+save_object(object = 'OA_shapefile_data/Output_Areas__December_2011__Boundaries_EW_BFC.xml',
+            file = here::here("shapefiles", "eng.xml"), 
+            bucket = buck_data)
 
 
 # load shp data
@@ -55,8 +62,8 @@ str(oa_shp)
 
 # Join spatial data with eng_dta (created in script 1)
 eng_dta <- s3read_using(import # Which function are we using to read
-                        , object = 'data/clean/eng_dta_OA.RDS' # File to open
-                        , bucket = buck) # Bucket name defined above
+                        , object = 'eng_dta_OA.RDS' # File to open
+                        , bucket = buck_clean) # Bucket name defined above
 
 oa_shp <- left_join(oa_shp, eng_dta, by = c("OA11CD" = "geography"))
   # geography is the OA code in the eng_dta df and OA11CD the code in the shapefile data
@@ -75,16 +82,15 @@ oa_shp_simple <- st_simplify(oa_shp,
 
 # ensure geometry is valid
 oa_shp_simple <- sf::st_make_valid(oa_shp_simple)
-  # not sure what this command does (from the geographic data science practical)
+  # not sure how this command changes boundaries in practice
 
 
 # Prepare THF colour scheme
 pal_THF <- c('#dd0031', '#53a9cd',  '#744284',  '#ffd412',   '#2a7979', '#ee9b90', '#0c402b', '#a6d7d3', '#005078', '#f39214', '#2ca365')
 grDevices::palette(pal_THF)
-  # not sure what the palette command does
 
 
-# These maps take ages to run, and are hard to read. 
+# These maps take a long time to run, and are hard to read. 
   # not spending more time on these in favour of LSOA/MSOA maps
 
 # Map 1 - Simple map of England and Wales
@@ -96,7 +102,7 @@ tm_shape(oa_shp_simple) +
             legend.position = c("right","top"),
             legend.bg.color = "white",
             legend.bg.alpha = 1)
-  # OA level doesn't produce the most readable maps even after removing boundaries
+  # OA level doesn't produce very readable maps even after removing boundaries
   # and takes much longer to produce OA level maps than LA level maps
 
 # remove polygon borders
@@ -110,7 +116,6 @@ map2_1 <- tm_shape(oa_shp_simple) +
             legend.bg.color = "white",
             legend.bg.alpha = 1) 
 map2_1
-  # seems to have removed borders but can't figure out what the white areas are 
 
 
 
@@ -141,10 +146,6 @@ map2_2
 s3write_using(map2_2 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
               , object = 'outputs/map2_mobility_OAs.tiff' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above
+              , bucket = buck_main) # Bucket name defined above
 
-
-  # should we remove Wales from the shp file? 
-
-  # having trouble getting these to work on DAP, get write errors - not critical since we'll be working at lSOA/MSOA level
 

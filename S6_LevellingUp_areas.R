@@ -4,6 +4,9 @@
 # clear R environment
 rm(list = ls())
 
+# run script with bucket names
+source("0_file_pathways.R") 
+
 # Load packages
 pacman::p_load(haven, 
                dplyr, 
@@ -11,7 +14,6 @@ pacman::p_load(haven,
                janitor,
                questionr, 
                epiDisplay, 
-               epirhandbook,
                rio, 
                ggplot2, 
                apyramid,
@@ -20,12 +22,10 @@ pacman::p_load(haven,
                here)
 
 # Import Levelling Up data
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping' ## my bucket name
-
-#data were downloaded from https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwjyroCDndj6AhWGUcAKHVAtCNsQFnoECAsQAQ&url=https%3A%2F%2Fassets.publishing.service.gov.uk%2Fgovernment%2Fuploads%2Fsystem%2Fuploads%2Fattachment_data%2Ffile%2F966137%2FLevelling_Up_Fund_list_of_local_authorities_by_priority_category.xlsx&usg=AOvVaw3NIQ1EBTwu0jLNSisnn3XT 
+    #data were downloaded from https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwjyroCDndj6AhWGUcAKHVAtCNsQFnoECAsQAQ&url=https%3A%2F%2Fassets.publishing.service.gov.uk%2Fgovernment%2Fuploads%2Fsystem%2Fuploads%2Fattachment_data%2Ffile%2F966137%2FLevelling_Up_Fund_list_of_local_authorities_by_priority_category.xlsx&usg=AOvVaw3NIQ1EBTwu0jLNSisnn3XT 
 levup <-s3read_using(import # Which function are we using to read
-                      , object = 'data/Levelling_Up_priority_areas/Levelling_Up_Fund_list_of_local_authorities_by_priority_category.xlsx' # File to open
-                      , bucket = buck) # Bucket name defined above
+                      , object = 'Levelling_Up_priority_areas/Levelling_Up_Fund_list_of_local_authorities_by_priority_category.xlsx' # File to open
+                      , bucket = buck_data) # Bucket name defined above
 
 
 dim(levup)
@@ -45,23 +45,28 @@ levup <- levup %>%
 # load packages
 pacman::p_load(sf,
                XML,
-               tmap,
-               THFstyle)
+               tmap)
 
 # read LAD boundaries from 2021 (to match Levelling Up boundaries)
 # import shp data
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/LAD_MAY_2021_UK_BFE_V2.shp',
-            file = here::here("shapefiles", "eng.shp"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/LAD_MAY_2021_UK_BFE_V2.cpg',
-            file = here::here("shapefiles", "eng.cpg"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/LAD_MAY_2021_UK_BFE_V2.dbf',
-            file = here::here("shapefiles", "eng.dbf"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/LAD_MAY_2021_UK_BFE_V2.prj',
-            file = here::here("shapefiles", "eng.prj"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/LAD_MAY_2021_UK_BFE_V2.shx',
-            file = here::here("shapefiles", "eng.shx"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(May_2021)_UK_BFE_V3.xml',
-            file = here::here("shapefiles", "eng.xml"))
+save_object(object = 'LAD_shapefile_data/LAD_MAY_2021_UK_BFE_V2.shp',
+            file = here::here("shapefiles", "eng.shp"),
+            bucket = buck_data)
+save_object(object = 'LAD_shapefile_data/LAD_MAY_2021_UK_BFE_V2.cpg',
+            file = here::here("shapefiles", "eng.cpg"),
+            bucket = buck_data)
+save_object(object = 'LAD_shapefile_data/LAD_MAY_2021_UK_BFE_V2.dbf',
+            file = here::here("shapefiles", "eng.dbf"),
+            bucket = buck_data)
+save_object(object = 'LAD_shapefile_data/LAD_MAY_2021_UK_BFE_V2.prj',
+            file = here::here("shapefiles", "eng.prj"),
+            bucket = buck_data)
+save_object(object = 'LAD_shapefile_data/LAD_MAY_2021_UK_BFE_V2.shx',
+            file = here::here("shapefiles", "eng.shx"),
+            bucket = buck_data)
+save_object(object = 'LAD_shapefile_data/Local_Authority_Districts_(May_2021)_UK_BFE_V3.xml',
+            file = here::here("shapefiles", "eng.xml"),
+            bucket = buck_data)
 
 lad_shp21 <- st_read(here::here("shapefiles", "eng.shp"))
 
@@ -77,7 +82,7 @@ dim(lad_shp21)
 
 # Drop Scotland and Northern Ireland
 lad_shp21 <- lad_shp21 %>%
-  subset(str_detect(LAD21CD, 'E') | str_detect(LAD21CD, 'W'))
+  subset(str_detect(LAD21CD, '^E') | str_detect(LAD21CD, '^W'))
 
 
 tabyl(lad_shp21$Priority.category)
@@ -126,8 +131,7 @@ map6_1
 s3write_using(map6_1 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
               , object = 'outputs/map6_1_LevUp_priorityareas.tiff' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
-
+              , bucket = buck_main) # Bucket name defined above  
 
 
 
@@ -150,5 +154,5 @@ map6_2
 s3write_using(map6_2 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
               , object = 'outputs/map6_2_LevUp_priorityareas_London.tiff' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+              , bucket = buck_main) # Bucket name defined above  
 

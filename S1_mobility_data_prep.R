@@ -4,6 +4,9 @@
 # clear R environment
 rm(list = ls())
 
+# run script with bucket names
+source("0_file_pathways.R") 
+
 # list.of.packages.cran <- c(
 #   "arm", "car", "corrplot", "FRK", "gghighlight",
 #   "ggplot2", "ggmap", "GISTools", "gridExtra", "gstat",
@@ -33,7 +36,6 @@ pacman::p_load(haven,
                janitor,
                questionr, 
                epiDisplay, 
-               epirhandbook,
                rio, 
                ggplot2, 
                apyramid,
@@ -41,6 +43,7 @@ pacman::p_load(haven,
                stringr, 
                here,
                readr)
+
 
 # set working directory (local/fixed pathway)
   #NOTE: obsolete since project sets wd and using "here"
@@ -50,46 +53,43 @@ here()
 
 # import all data
   ## data were downloaded from: https://www.nomisweb.co.uk/census/2011/ukmig008
-  ## can't figure out how to download directly/find the URL for different CSVs
 
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data' ## my bucket name
-
-## load things to the environment directly from s3 bucket
+## load files to the environment directly from s3 bucket
 eastdta <- s3read_using(import # Which function are we using to read
              , object = 'censusmig_OA_East.csv' # File to open
-             , bucket = buck) # Bucket name defined above
+             , bucket = buck_data) # Bucket name defined above
 
 emdta <- s3read_using(import # Which function are we using to read
                         , object = 'censusmig_OA_EastMidlands.csv' # File to open
-                        , bucket = buck) # Bucket name defined above
+                        , bucket = buck_data) # Bucket name defined above
 
 londondta <- s3read_using(import # Which function are we using to read
                       , object = 'censusmig_OA_London.csv' # File to open
-                      , bucket = buck) # Bucket name defined above
+                      , bucket = buck_data) # Bucket name defined above
 
 nedta <- s3read_using(import # Which function are we using to read
                           , object = 'censusmig_OA_NorthEast.csv' # File to open
-                          , bucket = buck) # Bucket name defined above
+                          , bucket = buck_data) # Bucket name defined above
 
 nwdta <- s3read_using(import # Which function are we using to read
                       , object = 'censusmig_OA_NorthWest.csv' # File to open
-                      , bucket = buck) # Bucket name defined above
+                      , bucket = buck_data) # Bucket name defined above
 
 sedta <- s3read_using(import # Which function are we using to read
                       , object = 'censusmig_OA_SouthEast.csv' # File to open
-                      , bucket = buck) # Bucket name defined above
+                      , bucket = buck_data) # Bucket name defined above
 
 swdta <- s3read_using(import # Which function are we using to read
                       , object = 'censusmig_OA_SouthWest.csv' # File to open
-                      , bucket = buck) # Bucket name defined above
+                      , bucket = buck_data) # Bucket name defined above
 
 wmdta <- s3read_using(import # Which function are we using to read
                       , object = 'censusmig_OA_WestMidlands.csv' # File to open
-                      , bucket = buck) # Bucket name defined above
+                      , bucket = buck_data) # Bucket name defined above
 
 yhdta <- s3read_using(import # Which function are we using to read
                       , object = 'censusmig_OA_YorkshireHumber.csv' # File to open
-                      , bucket = buck) # Bucket name defined above
+                      , bucket = buck_data) # Bucket name defined above
 
 
 # append all datasets together
@@ -161,7 +161,7 @@ for (i in varlist) {
 varlist <- c("n_outmig", "n_usualres11", "n_inmig")
 lapply(eng_dta[varlist], tabyl)
 
-  #Jay uses tableone instead of tabyl for tabulations, check out links (bookmarked)
+  #Can also use tableone instead of tabyl for tabulations
 
 
 
@@ -231,7 +231,7 @@ eng_dta <- eng_dta %>%
     net_migration > -5 & net_migration < 5 & turnover <19 ~ "Stable, low turnover"
   ))
   
-#Advice from Jay: 
+#Advice for recoding: 
   # stay away from factors, use as.character instead 
   # if want to use it as factor, transform it at the very end 
   # only use factor for ordered categorical, does some weird things for graphs etc. 
@@ -245,10 +245,7 @@ tabyl(eng_dta$mob_cat)
 
 
 #Save dataset 
-
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
-
 s3write_using(eng_dta # What R object we are saving
               , FUN = write_rds # Which R function we are using to save
               , object = 'eng_dta_OA.RDS' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above
+              , bucket = buck_clean) # Bucket name defined above
