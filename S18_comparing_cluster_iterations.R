@@ -3,6 +3,9 @@
 # clear R environment
 rm(list = ls())
 
+# run script with bucket names
+source("0_file_pathways.R") 
+
 # load packages
 library(plyr)
 library(dplyr)
@@ -19,19 +22,18 @@ library(stringr)
 library(janitor)
 
 
-data_bucket <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp'
-
 
 # load data on residential mobility clusters (created in script 4)
 
 data <- s3read_using(FUN = fread,
-                    object = 'Francesca/mobility_scoping/data/clean/mobility_clusters_LA_v2.csv',
-                    bucket = data_bucket)
+                    object = 'mobility_clusters_LA_v2.csv',
+                    bucket = buck_clean)
 
 
 # Merge with previous classification to check differences
 data_v1 <- s3read_using(import, 
-                        object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean/mobility_clusters_LA.csv') # File to open 
+                        object = 'mobility_clusters_LA.csv', 
+                        bucket = buck_clean) 
 
 data_v1 <- data_v1 %>%
   rename( cluster_v1 = cluster) %>%
@@ -68,12 +70,10 @@ data %>%
 # second iteration
 rm(list = ls())
 
-data_bucket <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp'
-
 
 # load data on residential mobility clusters (created in script 4)
 
 data <- s3read_using(FUN = fread,
-                     object = 'Francesca/mobility_scoping/data/clean/mobility_clusters_LA_v2.csv',
-                     bucket = data_bucket)
+                     object = 'mobility_clusters_LA_v2.csv',
+                     bucket = buck_clean)
 

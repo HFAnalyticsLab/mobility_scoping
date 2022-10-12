@@ -4,12 +4,13 @@
 # clear R environment
 rm(list = ls())
 
+# run script with bucket names
+source("0_file_pathways.R") 
 
 #load packages
 pacman::p_load(sf,
                XML,
                tmap,
-               THFstyle,
                viridis, 
                wesanderson,
                aws.s3,
@@ -22,9 +23,10 @@ pacman::p_load(sf,
 # import all data
 ## data were downloaded from: https://www.nomisweb.co.uk/census/2011/ukmig006
 le_dta <- s3read_using(import, 
-                       object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/life_expectancy_LA.xlsx') # File to open 
+                       object = 'life_expectancy_LA.xlsx', 
+                       bucket = buck_data) 
 
-dim(EA_dta)      #55 variables, 16842 observations
+dim(le_dta)      #55 variables, 16842 observations
 
 # tidy variables names
 le_dta<-le_dta %>% 
@@ -47,28 +49,25 @@ le_dta <- le_dta %>%
 
 
 
-# load packages
-pacman::p_load(sf,
-               XML,
-               tmap,
-               THFstyle,
-               devtools, 
-               viridis, 
-               wesanderson)
-
 # import shp data
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/LAD_MAY_2021_UK_BFE_V2.shp',
-            file = here::here("shapefiles", "eng.shp"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/LAD_MAY_2021_UK_BFE_V2.cpg',
-            file = here::here("shapefiles", "eng.cpg"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/LAD_MAY_2021_UK_BFE_V2.dbf',
-            file = here::here("shapefiles", "eng.dbf"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/LAD_MAY_2021_UK_BFE_V2.prj',
-            file = here::here("shapefiles", "eng.prj"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/LAD_MAY_2021_UK_BFE_V2.shx',
-            file = here::here("shapefiles", "eng.shx"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(May_2021)_UK_BFE_V3.xml',
-            file = here::here("shapefiles", "eng.xml"))
+save_object(object = 'LAD_shapefile_data/LAD_MAY_2021_UK_BFE_V2.shp',
+            file = here::here("shapefiles", "eng.shp"), 
+            bucket = buck_data)
+save_object(object = 'LAD_shapefile_data/LAD_MAY_2021_UK_BFE_V2.cpg',
+            file = here::here("shapefiles", "eng.cpg"), 
+            bucket = buck_data)
+save_object(object = 'LAD_shapefile_data/LAD_MAY_2021_UK_BFE_V2.dbf',
+            file = here::here("shapefiles", "eng.dbf"), 
+            bucket = buck_data)
+save_object(object = 'LAD_shapefile_data/LAD_MAY_2021_UK_BFE_V2.prj',
+            file = here::here("shapefiles", "eng.prj"), 
+            bucket = buck_data)
+save_object(object = 'LAD_shapefile_data/LAD_MAY_2021_UK_BFE_V2.shx',
+            file = here::here("shapefiles", "eng.shx"), 
+            bucket = buck_data)
+save_object(object = 'LAD_shapefile_data/Local_Authority_Districts_(May_2021)_UK_BFE_V3.xml',
+            file = here::here("shapefiles", "eng.xml"), 
+            bucket = buck_data)
 
 
 # read LAD boundaries
@@ -78,7 +77,7 @@ str(lad_shp)
 
 # Drop Scotland and Northern Ireland
 lad_shp <- lad_shp %>%
-  subset(str_detect(LAD21CD, 'E') | str_detect(LAD21CD, 'W'))
+  subset(str_detect(LAD21CD, '^E') | str_detect(LAD21CD, '^W'))
 
 # replace name for Rhondda so it merges correctly
 #rename first column
@@ -116,10 +115,8 @@ map18_1
 
 
 # Save data
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
-
 s3write_using(lad_shp # What R object we are saving
               , FUN = write.csv # Which R function we are using to save
               , object = 'life_expectancy_for_Flourish.csv' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above
+              , bucket = buck_clean) # Bucket name defined above
 

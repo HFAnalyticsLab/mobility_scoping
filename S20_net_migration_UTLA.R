@@ -4,6 +4,8 @@
 # clear R environment
 rm(list = ls())
 
+# run script with bucket names
+source("0_file_pathways.R") 
 
 #load packages
 pacman::p_load(dplyr,
@@ -21,13 +23,15 @@ pacman::p_load(dplyr,
 
 # import data
 netmig_dta <- s3read_using(import, 
-                       object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean/net_migration_LAD.csv') # File to open 
+                       object = 'net_migration_LAD.csv', 
+                       bucket = buck_clean) 
 
 dim(netmig_dta)      #16 variables, 360 observations
 
 # import lookup table
 lookup <- s3read_using(import, 
-                           object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LTLA_UTLA_lookup_Dec2016.csv') # File to open 
+                       object = 'LTLA_UTLA_lookup_Dec2016.csv', 
+                       bucket = buck_data) # File to open 
 
 # merge data
 netmig_dta <- left_join(netmig_dta, lookup, by = c("geography_code" = "LTLA16CD"))
@@ -79,12 +83,10 @@ dim(netmig_dta)
   # this grouped e.g. inner and outer London, not sure if what we want
 
 # save data
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping' ## my bucket name
-
 s3write_using(netmig_dta # What R object we are saving
               , FUN = write_csv # Which R function we are using to save
-              , object = 'data/clean/net_migration_utla.csv' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above
+              , object = 'net_migration_utla.csv' # Name of the file to save to (include file type)
+              , bucket = buck_clean) # Bucket name defined above
 
 
 

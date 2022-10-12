@@ -2,7 +2,10 @@
 
 # clear R environment
 rm(list = ls())
- 
+
+# run script with bucket names
+source("0_file_pathways.R") 
+
 #load packages
 pacman::p_load(haven, 
                dplyr, 
@@ -10,7 +13,6 @@ pacman::p_load(haven,
                janitor,
                questionr, 
                epiDisplay, 
-               epirhandbook,
                rio, 
                ggplot2, 
                apyramid,
@@ -23,15 +25,15 @@ pacman::p_load(haven,
                reshape2)
 
 # Load data
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping' ## my bucket name
-
 age_dta <- s3read_using(import, 
-                        object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean/age_net_migration.csv') # File to open 
+                        object = 'age_net_migration.csv', 
+                        bucket = buck_clean) 
 
-imd_dta <- s3read_using(import, 
-                        object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/IMD_MSOA.csv') # File to open 
   # Downloaded from https://research.mysociety.org/sites/imd2019/about/#data
   # 2019 IMD, not 2011
+imd_dta <- s3read_using(import, 
+                        object = 'IMD_MSOA.csv', 
+                        bucket = buck_data)  
 
 # merge on to data
 age_dta <- left_join(imd_dta, age_dta, by = c("MSOAC" = "geography_code"))
@@ -45,7 +47,8 @@ age_dta <- age_dta %>%
   dplyr::select(MSOAC, MSOARANK, IMD19.SCORE, MSOADECILE, ends_with("_netmigration"))
 
 dim(age_dta)
-  # 6791 MSOAs (is this less than expected?)
+  # 6791 MSOAs
+
 
 # reshape to long for ggplot
 age_dta <- melt(age_dta, id.vars = c("MSOAC", "MSOARANK", "IMD19.SCORE", "MSOADECILE"))
@@ -69,7 +72,7 @@ ggsave("graph11_1_netmigration_age_MSOArank.tiff")
 put_object(
   file = 'graph11_1_netmigration_age_MSOArank.tiff', 
   object = 'outputs/graph11_1_netmigration_age_MSOArank.tiff',
-  bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+  bucket = buck_main) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
 unlink("graph11_1_netmigration_age_MSOArank.tiff")
 
 
@@ -86,7 +89,7 @@ ggsave("graph11_2_netmigration_age_MSOAindex.tiff")
 put_object(
   file = 'graph11_2_netmigration_age_MSOAindex.tiff', 
   object = 'outputs/graph11_2_netmigration_age_MSOAindex.tiff',
-  bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+  bucket = buck_main) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
 unlink("graph11_2_netmigration_age_MSOAindex.tiff")
 
 
@@ -104,7 +107,7 @@ ggsave("graph11_3_netmigration_age_MSOAdecile.tiff")
 put_object(
   file = 'graph11_3_netmigration_age_MSOAindex.tiff', 
   object = 'outputs/graph11_3_netmigration_age_MSOAdecile.tiff',
-  bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+  bucket = buck_main) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
 unlink("graph11_3_netmigration_age_MSOAdecile.tiff")
 
 

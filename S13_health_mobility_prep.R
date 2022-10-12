@@ -4,6 +4,8 @@
 # clear R environment
 rm(list = ls())
 
+# run script with bucket names
+source("0_file_pathways.R") 
 
 #load packages
 pacman::p_load(haven, 
@@ -12,7 +14,6 @@ pacman::p_load(haven,
                janitor,
                questionr, 
                epiDisplay, 
-               epirhandbook,
                rio, 
                ggplot2, 
                apyramid,
@@ -29,24 +30,31 @@ pacman::p_load(haven,
 # import all data
 ## data were downloaded from: https://www.nomisweb.co.uk/census/2011/ukmig005 
 health_dta <- s3read_using(import, 
-                        object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/censusmig_health_MSOA.csv') # File to open 
+                        object = 'censusmig_health_MSOA.csv', 
+                        bucket = buck_data) # File to open 
 
 dim(health_dta)      #43 variables, 7201 observations
 
 
 #load shp files 
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.shp',
-            file = here::here("shapefiles", "eng.shp"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.cpg',
-            file = here::here("shapefiles", "eng.cpg"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.dbf',
-            file = here::here("shapefiles", "eng.dbf"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.prj',
-            file = here::here("shapefiles", "eng.prj"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.shx',
-            file = here::here("shapefiles", "eng.shx"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.xml',
-            file = here::here("shapefiles", "eng.xml"))
+save_object(object = 'MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.shp',
+            file = here::here("shapefiles", "eng.shp"), 
+            bucket = buck_data)
+save_object(object = 'MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.cpg',
+            file = here::here("shapefiles", "eng.cpg"), 
+            bucket = buck_data)
+save_object(object = 'MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.dbf',
+            file = here::here("shapefiles", "eng.dbf"), 
+            bucket = buck_data)
+save_object(object = 'MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.prj',
+            file = here::here("shapefiles", "eng.prj"),
+            bucket = buck_data)
+save_object(object = 'MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.shx',
+            file = here::here("shapefiles", "eng.shx"), 
+            bucket = buck_data)
+save_object(object = 'MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.xml',
+            file = here::here("shapefiles", "eng.xml"), 
+            bucket = buck_data)
 
 # load shp data
 msoa_shp <- st_read(here::here("shapefiles", "eng.shp"))
@@ -125,12 +133,11 @@ clean_dta <- clean_dta %>%
 
 tabyl(clean_dta$health_mig)
 
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
-
+# Save data
 s3write_using(clean_dta # What R object we are saving
               , FUN = write.csv # Which R function we are using to save
               , object = 'health_net_migration.csv' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above
+              , bucket = buck_clean) # Bucket name defined above
 
 
 ea_dta_plot<-clean_dta %>% 
@@ -150,9 +157,7 @@ msoa_shp <- left_join(msoa_shp,clean_dta , by = c("MSOA11CD" = "geography_code")
 # geography.code is the MSOA code in the eng_dta df and MSOA11CD the code in the shapefile data
 
 
-#For saving maps 
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/outputs' ## my bucket name
-
+#Maps 
 
 map13_1 <- tm_shape(msoa_shp) +
   tm_borders(,alpha=0) +

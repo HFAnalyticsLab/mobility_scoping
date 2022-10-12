@@ -3,6 +3,9 @@
 # clear R environment
 rm(list = ls())
 
+# run script with bucket names
+source("0_file_pathways.R") 
+
 # load packages
 library(plyr)
 library(dplyr)
@@ -19,14 +22,13 @@ library(stringr)
 library(janitor)
 
 
-data_bucket <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp'
 
 
 # load data on residential mobility clusters (created in script 4)
 
 data <- s3read_using(FUN = fread,
-                     object = 'Francesca/mobility_scoping/data/clean/mobility_clusters_LA_v2.csv',
-                     bucket = data_bucket)
+                     object = 'mobility_clusters_LA_v2.csv',
+                     bucket = buck_clean)
 
 
 
@@ -34,7 +36,8 @@ data <- s3read_using(FUN = fread,
 #Merge with life expectancy data
 ## data were downloaded from: https://www.nomisweb.co.uk/census/2011/ukmig006
 le_dta <- s3read_using(import, 
-                       object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/life_expectancy_LA.xlsx') # File to open 
+                       object = 'life_expectancy_LA.xlsx', 
+                       bucket = buck_data) 
 
 dim(le_dta)      #55 variables, 16842 observations
 
@@ -71,12 +74,10 @@ tabyl(le_dta$cluster)
 
 
 # Save data
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
-
 s3write_using(le_dta # What R object we are saving
               , FUN = write.csv # Which R function we are using to save
               , object = 'mobility_clusters_le_LA.csv' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above
+              , bucket = buck_clean) # Bucket name defined above
 
 
 
@@ -84,7 +85,8 @@ s3write_using(le_dta # What R object we are saving
 #Merge with 2012 life expectancy data to minimise missing values
 ## data were downloaded from: https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/lifeexpectancies/datasets/lifeexpectancyatbirthandatage65bylocalareasintheunitedkingdomtable1ukandlocalareasinenglandandwales
 le2012_dta <- s3read_using(import, 
-                           object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/life_expectancy_LA_2012_prep.xlsx') # File to open 
+                           object = 'life_expectancy_LA_2012_prep.xlsx', 
+                           bucket = buck_data) 
 
 dim(le2012_dta)      #7 variables, 449 observations
 
@@ -122,10 +124,8 @@ data <- data %>%
 
 
 # Save data
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
-
 s3write_using(data # What R object we are saving
               , FUN = write.csv # Which R function we are using to save
               , object = 'mobility_clusters_le2012_LA.csv' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above
+              , bucket = buck_clean) # Bucket name defined above
 

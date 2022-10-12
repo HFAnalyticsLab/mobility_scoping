@@ -4,6 +4,8 @@
 # clear R environment
 rm(list = ls())
 
+# run script with bucket names
+source("0_file_pathways.R") 
 
 #load packages
 pacman::p_load(tidyverse, 
@@ -21,11 +23,10 @@ pacman::p_load(tidyverse,
 
 # Data load ---------------------------------------------------------------
 
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data' ## my bucket name
 
 cdrc_lad<-s3read_using(read_csv # Which function are we using to read
                        , object = 'CDRC_residential_mobility_index_LAD.csv' # File to open
-                       , bucket = buck) # Bucket name defined above
+                       , bucket = buck_data) # Bucket name defined above
 
 #have churn of every year from 1997-2019 compared to 2020
 summary(cdrc_lad)
@@ -58,7 +59,7 @@ t<-boxplot(RMIx2020~year,data=cdrc_plot, main="Net Migration by Year",
     # download -> local authority: district/unitary (prior to April 2015)
 eng_dta <- s3read_using(import # Which function are we using to read
                         , object = 'la_migration.csv' # File to open
-                        , bucket = buck) # Bucket name defined above
+                        , bucket = buck_data) # Bucket name defined above
 
 eng_dta<-eng_dta %>% 
   clean_names()
@@ -112,12 +113,11 @@ eng_dta<-eng_dta %>%
                                     netmigration > 1 ~ "Positive (greater than 1% of people moving in)", 
                                     TRUE ~ "stable migration (~1% of population moving in and out)"))
 
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
 
 s3write_using(eng_dta # What R object we are saving
               , FUN = write.csv # Which R function we are using to save
               , object = 'net_migration_LAD.csv' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above
+              , bucket = buck_clean) # Bucket name defined above
 
 
 
@@ -150,7 +150,7 @@ corr
 
 new_census <- s3read_using(import # Which function are we using to read
                            , object = 'pop_change.csv' # File to open
-                           , bucket = buck) # Bucket name defined above
+                           , bucket = buck_clean) # Bucket name defined above
 
 new_census<-new_census %>% 
   janitor::row_to_names(.,3,remove_rows_above = TRUE) %>% 
@@ -214,11 +214,9 @@ corr
 # Validating against 2011 cdrc data ---------------------------------------
 
 
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data' ## my bucket name
-
 cdrc_lad_2011<-s3read_using(read_csv # Which function are we using to read
                        , object = 'CDRC_LAD_2011.csv' # File to open
-                       , bucket = buck) # Bucket name defined above
+                       , bucket = buck_data) # Bucket name defined above
 
 
 #have churn of every year from 1997-2019 compared to 2011

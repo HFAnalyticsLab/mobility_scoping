@@ -4,11 +4,13 @@
 # clear R environment
 rm(list = ls())
 
+# run script with bucket names
+source("0_file_pathways.R") 
+
 # load packages
 pacman::p_load(sf,
                XML,
                tmap,
-               THFstyle,
                viridis, 
                wesanderson,
                aws.s3,
@@ -18,33 +20,38 @@ pacman::p_load(sf,
                ggmap)
 
 #load mobility MSOA data
-# buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
-# 
 # age_dta<-s3read_using(readRDS # Which function are we using to read
 #                       , object = 'eng_age_dta_MSOA.RDS' # File to open
-#                       , bucket = buck) # Bucket name defined above
+#                       , bucket = buck_clean) # Bucket name defined above
 # 
 
 
 ## data were downloaded from: https://www.nomisweb.co.uk/census/2011/ukmig001
 age_dta <- s3read_using(import, 
-                        object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/migration_age_sex.csv') # File to open 
+                        object = 'migration_age_sex.csv', 
+                        bucket = buck_data) 
 
 dim(age_dta)      #303 variables, 7201 observations
 
 #load shp files 
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.shp',
-            file = here::here("shapefiles", "eng.shp"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.cpg',
-            file = here::here("shapefiles", "eng.cpg"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.dbf',
-            file = here::here("shapefiles", "eng.dbf"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.prj',
-            file = here::here("shapefiles", "eng.prj"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.shx',
-            file = here::here("shapefiles", "eng.shx"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.xml',
-            file = here::here("shapefiles", "eng.xml"))
+save_object(object = 'MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.shp',
+            file = here::here("shapefiles", "eng.shp"), 
+            bucket = buck_data)
+save_object(object = 'MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.cpg',
+            file = here::here("shapefiles", "eng.cpg"), 
+            bucket = buck_data)
+save_object(object = 'MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.dbf',
+            file = here::here("shapefiles", "eng.dbf"), 
+            bucket = buck_data)
+save_object(object = 'MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.prj',
+            file = here::here("shapefiles", "eng.prj"),
+            bucket = buck_data)
+save_object(object = 'MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.shx',
+            file = here::here("shapefiles", "eng.shx"), 
+            bucket = buck_data)
+save_object(object = 'MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.xml',
+            file = here::here("shapefiles", "eng.xml"), 
+            bucket = buck_data)
 
 # load shp data
 msoa_shp <- st_read(here::here("shapefiles", "eng.shp"))
@@ -63,6 +70,7 @@ colnames(age_dta)
 under_34<-c("0_to_4", "5_to_15", "16_to_19","20_to_24", "25_to_34")
 x35_to_64<-c("35_to_49","50_to_64")
 x65plus<-c("65_to_64","75_and_over")
+      # Note: mistake in the column name of raw dataset (65 to 64 instead of 74)
 
 age_dta_clean<-age_dta %>% 
   dplyr::select(c("date", "geography", "geography_code", contains(c("same_address", "inflow_total_measures","outflow_total_measures", "within_same_area_measures")))) %>% 
@@ -111,12 +119,10 @@ age_dta_shp<-age_dta_clean %>%
   dplyr::select(c("date", "geography", "geography_code",contains(c("netmigration"))))
 
 #save data
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
-
 s3write_using(age_dta_shp # What R object we are saving
               , FUN = write.csv # Which R function we are using to save
               , object = 'age_net_migration.csv' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above
+              , bucket = buck_clean) # Bucket name defined above
 
 
 summary(age_dta_shp)
@@ -165,8 +171,6 @@ grDevices::palette(pal_THF)
 
 
 # Map 9.1 - map of net migration rate by age
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/outputs' ## my bucket name
-
 
 map10_1 <- tm_shape(msoa_shp) +
   tm_borders(,alpha=0) +
@@ -181,9 +185,7 @@ map10_1 <- tm_shape(msoa_shp) +
 
 map10_1
 
-filepath<- here::here('outputs', "map10_1.png")
 
-tmap_save(map10_1,filepath)
 
 map10_2<-tm_shape(msoa_shp) +
   tm_fill(col = "x35_to_64_netmigration_lab", palette = "viridis", title = "35-64 Net migration (%)") +
@@ -196,9 +198,6 @@ map10_2<-tm_shape(msoa_shp) +
 
 map10_2 
 
-filepath<- here::here('outputs', "map10_2.png")
-
-tmap_save(map10_2,filepath)
 
 map10_3<-tm_shape(msoa_shp) +
   tm_fill(col = "x65plus_netmigration_lab", style = "cat", palette = "viridis", title = "65+ Net migration (%)") +
@@ -211,25 +210,12 @@ map10_3<-tm_shape(msoa_shp) +
 
 map10_3 
 
-filepath<- here::here('outputs', "map10_3.png")
-
-tmap_save(map10_3,filepath)
 
 # map9<-tmap_arrange(map9_1, map9_2, map9_3)
 # 
 # map9
 # 
 # 
-# 
-# s3write_using(map9 # What R object we are saving
-#               , FUN = tmap_save # Which R function we are using to save
-#               , object = 'map9_newcats.png' # Name of the file to save to (include file type)
-#               , bucket = buck) # Bucket name defined above
-# 
-
-# tmap_save(map3, here("outputs", "map3_mobility_MSOAs.tiff"))
-# # Note: need to figure out how to export maps with sw3 commands
-# # + scale_fill_manual to set category colours manually
 # 
 
 # Make maps for selected metro areas - London
@@ -250,10 +236,8 @@ map10_4 <- tm_shape(ldn_msoa_shp) +
             legend.position = c("left","top"),
             legend.bg.color = "white",
             legend.bg.alpha = 1)
+map10_4
 
-filepath<- here::here('outputs', "map10_4.png")
-
-tmap_save(map10_4,filepath)
 
 map10_5<-tm_shape(ldn_msoa_shp) +
   tm_fill(col = "x35_to_64_netmigration_lab", palette = "viridis", title = "35-64 Net migration rate in London (%)") +
@@ -263,10 +247,7 @@ map10_5<-tm_shape(ldn_msoa_shp) +
             legend.position = c("left","top"),
             legend.bg.color = "white",
             legend.bg.alpha = 1)
-
-filepath<- here::here('outputs', "map10_5.png")
-
-tmap_save(map10_5,filepath)
+map10_5
 
 map10_6<-tm_shape(ldn_msoa_shp) +
   tm_fill(col = "x65plus_netmigration_lab", style = "cat", palette = "viridis", title = "65+ Net migration rate in London (%)") +
@@ -276,21 +257,7 @@ map10_6<-tm_shape(ldn_msoa_shp) +
             legend.position = c("left","top"),
             legend.bg.color = "white",
             legend.bg.alpha = 1)
-
-filepath<- here::here('outputs', "map10_6.png")
-
-tmap_save(map10_6,filepath)
-
-# map10<-tmap_arrange(map10_1, map10_2, map10_3)
-# 
-# map10
-# 
-# 
-# s3write_using(map10 # What R object we are saving
-#               , FUN = tmap_save # Which R function we are using to save
-#               , object = 'map10_newcats.png' # Name of the file to save to (include file type)
-#               , bucket = buck) # Bucket name defined above
-
+map10_6
 
 
 
