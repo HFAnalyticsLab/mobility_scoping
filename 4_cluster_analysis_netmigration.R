@@ -1,10 +1,11 @@
 ## Cluster analysis of residential mobility factors
-## FC 10/08/2021
 
 # clear R environment
 rm(list = ls())
 
-library(ggbiplot)
+# load packages
+library(plyr)
+library(dplyr)
 library(tidyverse)
 library(factoextra)
 library(cluster)
@@ -13,11 +14,14 @@ library(rio)
 library(data.table)
 library(devtools)
 #install_github('vqv/ggbiplot')
+library(ggbiplot)
 library(stringr)
 library(janitor)
 
+
 data_bucket <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp'
 
+# load data on net migration by age (created in script 1)
 age <- s3read_using(FUN = fread,
                     object = 'Francesca/mobility_scoping/data/clean/age_net_migration_LA.csv',
                     bucket = data_bucket)[, .(geography,
@@ -26,6 +30,7 @@ age <- s3read_using(FUN = fread,
                                               x35_to_64_netmigration,
                                               x65plus_netmigration)]
 
+# load data on net migration health status (created in script 2)
 health <- s3read_using(FUN = fread,
                        object = 'Francesca/mobility_scoping/data/clean/health_net_migration_LA.csv',
                        bucket = data_bucket)[, .(geography,
@@ -34,6 +39,7 @@ health <- s3read_using(FUN = fread,
                                                  netmigration_limlit,
                                                  netmigration_notlim)]
 
+# load data on net migration by economic activity (created in script 3)
 ea <- s3read_using(FUN = fread,
                    object = 'Francesca/mobility_scoping/data/clean/ea_with_students_net_migration_LAD_v2.csv',
                    bucket = data_bucket)[, .(geography,
@@ -42,6 +48,7 @@ ea <- s3read_using(FUN = fread,
                                              ei_netmigration,
                                              student_netmigration)]
 
+#load data on overall net migration in local authorities 
 netmig <- s3read_using(FUN = fread,
                        object = 'Francesca/mobility_scoping/data/clean/net_migration_LAD.csv',
                        bucket = data_bucket)[, .(geography,
@@ -61,6 +68,7 @@ setdiff(netmig$geography_code, age$geography_code)
 setdiff(netmig$geography_code, ea$geography_code)
 setdiff(netmig$geography_code, health$geography_code)
 
+# Create data frame with columns used in cluster analysis
 data <- age[health, on = 'geography_code'][ea, on = 'geography_code'][netmig, on = 'geography_code'][
   !is.na(geography), .(geography,
                        under_34_netmigration,
@@ -75,11 +83,13 @@ data <- age[health, on = 'geography_code'][ea, on = 'geography_code'][netmig, on
                        netmigration)] %>%
   data.frame()
 
+# Move local authority name to row names
 row.names(data) <- data$geography
 data$geography <- NULL
 
 str(data)
 
+# scale net migration rates in each group
 data <- scale(data) %>% data.frame()
 names(data) <- c('younger',
                  'middle aged',
@@ -92,15 +102,20 @@ names(data) <- c('younger',
                  'students', 
                  'netmigration')
 
+#set random seed (to obtain reproducible results)
 set.seed(6524531)
+# perform k means analysis, setting 4 clusters
 fit <- kmeans(data, 4, nstart = 25)
 
+# Merge clusters on to main data frame
 data$cluster <- fit$cluster
 
+# Plot clusters
 clusplot(data, fit$cluster, color=TRUE, shade=TRUE, main = 'LSOA Cluster Analysis',
          labels=2, lines=0)
 
 
+# Describe highest and lowest scaled net migration rates in each of the four clusters
 aggregate(data, by=list(cluster=fit$cluster), min)
 aggregate(data, by=list(cluster=fit$cluster), max)
 
@@ -127,7 +142,7 @@ wssplot <- function(data, nc=15, seed=123){
 wssplot(data)
 
 
-## PCA
+## Principal Components Analysis
 pca <- prcomp(data, center = TRUE)
 summary(pca)
 str(pca)
@@ -148,8 +163,8 @@ ggbiplot(pca, groups = as.character(fit$cluster), labels = rownames(data)) +
   xlab('PC1 - ei and older group migration') +
   ylab('PC2 - healthy and younger group migration')
 
-## y axis is about healthy migration and young migration (PC2 - 33.9% var) reversed
-# x axis about economically inactive and older migration (PC1 - 38.0% var)
+## y axis is about healthy migration and young migration (PC2 - 32.8% var) reversed
+# x axis about economically inactive and older migration (PC1 - 36.1% var)
 
 ggbiplot(pca, choices = c(3, 4))
 ggbiplot(pca, labels = rownames(data), choices = c(3, 4))
