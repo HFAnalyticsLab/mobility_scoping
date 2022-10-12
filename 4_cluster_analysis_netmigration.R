@@ -3,6 +3,9 @@
 # clear R environment
 rm(list = ls())
 
+# run script with bucket names
+source("0_file_pathways.R") 
+
 # load packages
 library(plyr)
 library(dplyr)
@@ -19,12 +22,10 @@ library(stringr)
 library(janitor)
 
 
-data_bucket <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp'
-
 # load data on net migration by age (created in script 1)
 age <- s3read_using(FUN = fread,
-                    object = 'Francesca/mobility_scoping/data/clean/age_net_migration_LA.csv',
-                    bucket = data_bucket)[, .(geography,
+                    object = 'age_net_migration_LA.csv',
+                    bucket = buck_clean)[, .(geography,
                                               geography_code,
                                               under_34_netmigration,
                                               x35_to_64_netmigration,
@@ -32,8 +33,8 @@ age <- s3read_using(FUN = fread,
 
 # load data on net migration health status (created in script 2)
 health <- s3read_using(FUN = fread,
-                       object = 'Francesca/mobility_scoping/data/clean/health_net_migration_LA.csv',
-                       bucket = data_bucket)[, .(geography,
+                       object = 'health_net_migration_LA.csv',
+                       bucket = buck_clean)[, .(geography,
                                                  geography_code,
                                                  netmigration_limlot,
                                                  netmigration_limlit,
@@ -41,8 +42,8 @@ health <- s3read_using(FUN = fread,
 
 # load data on net migration by economic activity (created in script 3)
 ea <- s3read_using(FUN = fread,
-                   object = 'Francesca/mobility_scoping/data/clean/ea_with_students_net_migration_LAD_v2.csv',
-                   bucket = data_bucket)[, .(geography,
+                   object = 'ea_with_students_net_migration_LAD_v2.csv',
+                   bucket = buck_clean)[, .(geography,
                                              geography_code,
                                              ea_netmigration,
                                              ei_netmigration,
@@ -50,8 +51,8 @@ ea <- s3read_using(FUN = fread,
 
 #load data on overall net migration in local authorities (created in script S17)
 netmig <- s3read_using(FUN = fread,
-                       object = 'Francesca/mobility_scoping/data/clean/net_migration_LAD.csv',
-                       bucket = data_bucket)[, .(geography,
+                       object = 'net_migration_LAD.csv',
+                       bucket = buck_clean)[, .(geography,
                                                  geography_code,
                                                  netmigration)]
 
@@ -207,17 +208,24 @@ ggbiplot(pca, groups = as.character(fit$cluster), labels = rownames(data), choic
                  wesanderson)
 
 # import shp data
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.shp',
+#data were downloaded from https://geoportal.statistics.gov.uk/search?collection=Dataset&sort=name&tags=all(BDY_LAD%2CDEC_2011)
+save_object(object = 'LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.shp',
+            bucket = buck_data,
             file = here::here("shapefiles", "eng.shp"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.cpg',
+save_object(object = 'LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.cpg',
+            bucket = buck_data,
             file = here::here("shapefiles", "eng.cpg"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.dbf',
+save_object(object = 'LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.dbf',
+            bucket = buck_data,
             file = here::here("shapefiles", "eng.dbf"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.prj',
+save_object(object = 'LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.prj',
+            bucket = buck_data,
             file = here::here("shapefiles", "eng.prj"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.shx',
+save_object(object = 'LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.shx',
+            bucket = buck_data,
             file = here::here("shapefiles", "eng.shx"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.xml',
+save_object(object = 'LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.xml',
+            bucket = buck_data,
             file = here::here("shapefiles", "eng.xml"))
 
 # read LAD boundaries
@@ -253,12 +261,10 @@ tabyl(data$cluster)
 
 
 # Save data
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
-
 s3write_using(data # What R object we are saving
               , FUN = write.csv # Which R function we are using to save
               , object = 'mobility_clusters_LA_v2.csv' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above
+              , bucket = buck_clean) # Bucket name defined above
 
 
 
