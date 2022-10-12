@@ -5,11 +5,13 @@
 # clear R environment
 rm(list = ls())
 
+# run script with bucket names
+source("0_file_pathways.R") 
+
 # load packages
 pacman::p_load(sf,
                XML,
                tmap,
-               THFstyle,
                devtools,
                aws.s3,
                rio,
@@ -21,14 +23,12 @@ devtools::install_github("statnmap/HatchedPolygons")
 
 
 # NOTE: Census migration data not available at LSOA level
-# we can reconstruct it using lookup tables
+# can be reconstructed using lookup tables
 
 # Prepare lookup table data
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping' ## my bucket name
-
 lookup <- s3read_using(import # Which function are we using to read
-                       , object = 'data/PCD11_OA11_LSOA11_MSOA11_LAD11_EW_LU_aligned_v2.csv' # File to open
-                       , bucket = buck) # Bucket name defined above
+                       , object = 'PCD11_OA11_LSOA11_MSOA11_LAD11_EW_LU_aligned_v2.csv' # File to open
+                       , bucket = buck_data) # Bucket name defined above
 
 # drop columns don't need
 lookup <- lookup %>% 
@@ -36,8 +36,8 @@ lookup <- lookup %>%
 
 # merge on to eng_dta
 eng_dta <- s3read_using(import # Which function are we using to read
-                        , object = 'data/clean/eng_dta_OA.RDS' # File to open
-                        , bucket = buck) # Bucket name defined above
+                        , object = 'eng_dta_OA.RDS' # File to open
+                        , bucket = buck_clean) # Bucket name defined above
 
 eng_dta <- left_join(lookup, eng_dta, by = c("OA11CD" = "geography"))
 
@@ -113,23 +113,28 @@ tabyl(eng_dta$mob_cat, show_na = T)
 pacman::p_load(sf,
                XML,
                tmap,
-               THFstyle,
                HatchedPolygons, 
                rmapshaper)
 
 # import shp data
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.shp',
-            file = here::here("shapefiles", "eng.shp"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.cpg',
-            file = here::here("shapefiles", "eng.cpg"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.dbf',
-            file = here::here("shapefiles", "eng.dbf"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.prj',
-            file = here::here("shapefiles", "eng.prj"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.shx',
-            file = here::here("shapefiles", "eng.shx"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.xml',
-            file = here::here("shapefiles", "eng.xml"))
+save_object(object = 'LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.shp',
+            file = here::here("shapefiles", "eng.shp"), 
+            bucket = buck_data)
+save_object(object = 'LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.cpg',
+            file = here::here("shapefiles", "eng.cpg"), 
+            bucket = buck_data)
+save_object(object = 'LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.dbf',
+            file = here::here("shapefiles", "eng.dbf"), 
+            bucket = buck_data)
+save_object(object = 'LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.prj',
+            file = here::here("shapefiles", "eng.prj"), 
+            bucket = buck_data)
+save_object(object = 'LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.shx',
+            file = here::here("shapefiles", "eng.shx"), 
+            bucket = buck_data)
+save_object(object = 'LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.xml',
+            file = here::here("shapefiles", "eng.xml"), 
+            bucket = buck_data)
 
 # read LAD boundaries
 lad_shp <- st_read(here::here("shapefiles", "eng.shp"))
@@ -138,7 +143,7 @@ str(lad_shp)
 
 # Drop Scotland and Northern Ireland
 lad_shp <- lad_shp %>%
-  subset(str_detect(lad11cd, 'E') | str_detect(lad11cd, 'W'))
+  subset(str_detect(lad11cd, '^E') | str_detect(lad11cd, '^W'))
 
 
 # Join spatial data
@@ -167,7 +172,7 @@ map7_1
 s3write_using(map7_1 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
               , object = 'outputs/map7_1_LevUp_priorityareas_London.tiff' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+              , bucket = buck_main) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
 
 
 
@@ -190,10 +195,10 @@ map7_2
 s3write_using(map7_2 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
               , object = 'outputs/map7_2_LevUp_priorityareas_London.tiff' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+              , bucket = buck_main) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
 
 
-      ### NEED TO FINISH THIS BELOW
+      ### CODE BELOW IS UNFINISHED - AIMING TO OVERLAY TWO VARIABLES
 
 # Overlay Levelling Up priority areas
 

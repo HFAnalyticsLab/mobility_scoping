@@ -4,6 +4,8 @@
 # clear R environment
 rm(list = ls())
 
+# run script with bucket names
+source("0_file_pathways.R") 
 
 #load packages
 pacman::p_load(haven, 
@@ -12,7 +14,6 @@ pacman::p_load(haven,
                janitor,
                questionr, 
                epiDisplay, 
-               epirhandbook,
                rio, 
                ggplot2, 
                apyramid,
@@ -23,15 +24,13 @@ pacman::p_load(haven,
                readr,
                matrixStats)
 
-# set working directory (local/fixed pathway)
-#NOTE: obsolete since project sets wd and using "here"
-#setwd("M:/Analytics/Francesca/Mobility_data")
 here()
 
 # import all data
-## data were downloaded from: https://www.nomisweb.co.uk/census/2011/ukmig008
+    ## data were downloaded from: https://www.nomisweb.co.uk/census/2011/ukmig008
 age_dta <- s3read_using(import, 
-                        object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/migration_age_sex.csv') # File to open 
+                        object = 'migration_age_sex.csv', 
+                        bucket = buck_data)  
 
 dim(age_dta)      #303 variables, 7201 observations
 
@@ -304,11 +303,8 @@ age_dta %>% dplyr::select(median_usualres10, median_usualres11, median_diff_1011
 
 
 #Save dataset 
-
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
-
 s3write_using(age_dta # What R object we are saving
               , FUN = write_rds # Which R function we are using to save
               , object = 'eng_age_dta_MSOA.RDS' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above
+              , bucket = buck_clean) # Bucket name defined above
 

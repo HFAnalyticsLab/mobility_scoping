@@ -1,15 +1,17 @@
 #save script in bucket 
 ## save this script to that folder in the bucket
-# buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/' ## my bucket name
 # 
 # put_object(
 #   file = '08_CRDC_data_prep.R',
 #   object = '08_CDRC_data_prep.R',
-#   bucket = buck
+#   bucket = buck_main
 # )
 
 #tidy lib 
 rm(list=ls())
+
+# run script with bucket names
+source("0_file_pathways.R") 
 
 pacman::p_load(tidyverse,
                sf,
@@ -23,18 +25,24 @@ pacman::p_load(tidyverse,
 #Load LSOA shape file 
 
 # Need to download all 6 files in folder for .shp to load correctly
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LSOA_shapefile_data/Lower_Layer_Super_Output_Areas__December_2011__Boundaries_Full_Extent__BFE__EW_V3.shp',
-            file = here::here("shapefiles", "eng.shp"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LSOA_shapefile_data/Lower_Layer_Super_Output_Areas__December_2011__Boundaries_Full_Extent__BFE__EW_V3.cpg',
-            file = here::here("shapefiles", "eng.cpg"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LSOA_shapefile_data/Lower_Layer_Super_Output_Areas__December_2011__Boundaries_Full_Extent__BFE__EW_V3.dbf',
-            file = here::here("shapefiles", "eng.dbf"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LSOA_shapefile_data/Lower_Layer_Super_Output_Areas__December_2011__Boundaries_Full_Extent__BFE__EW_V3.prj',
-            file = here::here("shapefiles", "eng.prj"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LSOA_shapefile_data/Lower_Layer_Super_Output_Areas__December_2011__Boundaries_Full_Extent__BFE__EW_V3.shx',
-            file = here::here("shapefiles", "eng.shx"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LSOA_shapefile_data/Lower_Layer_Super_Output_Areas__December_2011__Boundaries_Full_Extent__BFE__EW_V3.xml',
-            file = here::here("shapefiles", "eng.xml"))
+save_object(object = 'LSOA_shapefile_data/Lower_Layer_Super_Output_Areas__December_2011__Boundaries_Full_Extent__BFE__EW_V3.shp',
+            file = here::here("shapefiles", "eng.shp"), 
+            bucket = buck_data)
+save_object(object = 'LSOA_shapefile_data/Lower_Layer_Super_Output_Areas__December_2011__Boundaries_Full_Extent__BFE__EW_V3.cpg',
+            file = here::here("shapefiles", "eng.cpg"), 
+            bucket = buck_data)
+save_object(object = 'LSOA_shapefile_data/Lower_Layer_Super_Output_Areas__December_2011__Boundaries_Full_Extent__BFE__EW_V3.dbf',
+            file = here::here("shapefiles", "eng.dbf"), 
+            bucket = buck_data)
+save_object(object = 'LSOA_shapefile_data/Lower_Layer_Super_Output_Areas__December_2011__Boundaries_Full_Extent__BFE__EW_V3.prj',
+            file = here::here("shapefiles", "eng.prj"), 
+            bucket = buck_data)
+save_object(object = 'LSOA_shapefile_data/Lower_Layer_Super_Output_Areas__December_2011__Boundaries_Full_Extent__BFE__EW_V3.shx',
+            file = here::here("shapefiles", "eng.shx"), 
+            bucket = buck_data)
+save_object(object = 'LSOA_shapefile_data/Lower_Layer_Super_Output_Areas__December_2011__Boundaries_Full_Extent__BFE__EW_V3.xml',
+            file = here::here("shapefiles", "eng.xml"), 
+            bucket = buck_data)
 
 # load shp data
 lsoa_shp <- st_read(here::here("shapefiles", "eng.shp"))
@@ -43,19 +51,16 @@ str(lsoa_shp)
 
 #remove Wales
 lsoa_shp <- lsoa_shp %>%
-  subset(str_detect(LSOA11CD, 'E'))
+  subset(str_detect(LSOA11CD, '^E'))
 
 
 
 
 #Prep CDRC data (only have LSOA or LAD)
 
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data' ## my bucket name
-
-
 cdrc_lsoa<-s3read_using(read_csv # Which function are we using to read
                         , object = 'CDRC_residential_mobility_index_LSOA.csv' # File to open
-                        , bucket = buck) # Bucket name defined above
+                        , bucket = buck_data) # Bucket name defined above
 
 #have churn of every year from 1997-2019 compared to 2020
 summary(cdrc_lsoa)
@@ -75,12 +80,10 @@ lsoa_shp <- left_join(lsoa_shp, cdrc_lsoa_clean, by = c("LSOA11CD" = "area"))
 summary(lsoa_shp)
 #Save dataset 
 
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
-
 s3write_using(lsoa_shp # What R object we are saving
               , FUN = write_rds # Which R function we are using to save
               , object = 'lsoa_cdrc.RDS' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above
+              , bucket = buck_clean) # Bucket name defined above
 
 
 
@@ -91,9 +94,6 @@ grDevices::palette(pal_THF)
 
 
 # Map 9.1 - map of net migration rate by age
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
-
-
 map9_1 <- tm_shape(lsoa_shp) +
   tm_borders(,alpha=0) +
   tm_fill(col = "chn2011", style="cont", palette = "viridis", title = "Churn index 2011") +

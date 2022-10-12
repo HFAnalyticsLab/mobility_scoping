@@ -4,27 +4,35 @@
 # clear R environment
 rm(list = ls())
 
+# run script with bucket names
+source("0_file_pathways.R") 
+
 # load packages
 pacman::p_load(sf,
                XML,
                tmap,
-               THFstyle,
                viridis, 
                wesanderson)
 
 # Download and load shapefile data
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.shp',
-            file = here::here("shapefiles", "eng.shp"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.cpg',
-            file = here::here("shapefiles", "eng.cpg"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.dbf',
-            file = here::here("shapefiles", "eng.dbf"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.prj',
-            file = here::here("shapefiles", "eng.prj"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.shx',
-            file = here::here("shapefiles", "eng.shx"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.xml',
-            file = here::here("shapefiles", "eng.xml"))
+save_object(object = 'MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.shp',
+            file = here::here("shapefiles", "eng.shp"), 
+            bucket = buck_data)
+save_object(object = 'MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.cpg',
+            file = here::here("shapefiles", "eng.cpg"), 
+            bucket = buck_data)
+save_object(object = 'MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.dbf',
+            file = here::here("shapefiles", "eng.dbf"), 
+            bucket = buck_data)
+save_object(object = 'MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.prj',
+            file = here::here("shapefiles", "eng.prj"),
+            bucket = buck_data)
+save_object(object = 'MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.shx',
+            file = here::here("shapefiles", "eng.shx"), 
+            bucket = buck_data)
+save_object(object = 'MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.xml',
+            file = here::here("shapefiles", "eng.xml"), 
+            bucket = buck_data)
 
 # load shp data
 msoa_shp <- st_read(here::here("shapefiles", "eng.shp"))
@@ -34,11 +42,9 @@ str(msoa_shp)
 
 
 #load mobility MSOA data
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping' ## my bucket name
-
 age_dta<-s3read_using(readRDS # Which function are we using to read
-                      , object = 'data/clean/eng_age_dta_MSOA.RDS' # File to open
-                      , bucket = buck) # Bucket name defined above
+                      , object = 'eng_age_dta_MSOA.RDS' # File to open
+                      , bucket = buck_clean) # Bucket name defined above
 
 # Join spatial data
 msoa_shp <- left_join(msoa_shp, age_dta, by = c("MSOA11CD" = "geography_code"))
@@ -73,7 +79,7 @@ map9_1
 s3write_using(map9_1 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
               , object = 'outputs/map9_1_meanage_nonmovers.tiff' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+              , bucket = buck_main) # Bucket name defined above 
 
 
 
@@ -91,7 +97,7 @@ map9_2
 s3write_using(map9_2 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
               , object = 'outputs/map9_2_meanage_inmigs.tiff' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+              , bucket = buck_main) # Bucket name defined above  
 
 
 
@@ -109,7 +115,7 @@ map9_3
 s3write_using(map9_3 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
               , object = 'outputs/map9_3_meanage_outmigs.tiff' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+              , bucket = buck_main) # Bucket name defined above  
 
 
 # Map 9.4 - map of difference in meant age of inmigrants and outmigrants
@@ -127,7 +133,7 @@ map9_4
 s3write_using(map9_4 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
               , object = 'outputs/map9_4_meanage_diffinoutmig.tiff' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+              , bucket = buck_main) # Bucket name defined above 
 
 
 # Map 9.5 - map of mean age of usual residents in 2010
@@ -144,7 +150,7 @@ map9_5
 s3write_using(map9_5 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
               , object = 'outputs/map9_5_meanage_usualres10.tiff' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+              , bucket = buck_main) # Bucket name defined above  
 
 
 # Map 9.6 - map of mean age of usual residents in 2011
@@ -161,7 +167,7 @@ map9_6
 s3write_using(map9_6 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
               , object = 'outputs/map9_6_meanage_usualres11.tiff' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+              , bucket = buck_main) # Bucket name defined above 
 
 
 # Map 9.7 - map of difference in mean age 2010-11
@@ -178,7 +184,7 @@ map9_7
 s3write_using(map9_7 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
               , object = 'outputs/map9_7_meanage_diff2010-11.tiff' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+              , bucket = buck_main) # Bucket name defined above 
 
 
 # Map 9.8 - map of difference in mean age - categorical 2010/11
@@ -195,7 +201,7 @@ map9_8
 s3write_using(map9_8 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
               , object = 'outputs/map9_8_meanage_diff2010-11_cat.tiff' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+              , bucket = buck_main) # Bucket name defined above  
 
 
 
@@ -279,7 +285,7 @@ map9_13
 s3write_using(map9_13 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
               , object = 'outputs/map9_13_meanage_usualres10_ldn.tiff' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+              , bucket = buck) # Bucket name defined above 
 
 
 # Map 9.14 - map of mean age of usual residents in 2011
@@ -296,7 +302,7 @@ map9_14
 s3write_using(map9_14 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
               , object = 'outputs/map9_14_meanage_usualres11_ldn.tiff' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+              , bucket = buck) # Bucket name defined above  
 
 
 # Map 9.15 - map of difference in mean age 2010-11
@@ -313,7 +319,7 @@ map9_15
 s3write_using(map9_15 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
               , object = 'outputs/map9_15_meanage_diff2010-11_ldn.tiff' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+              , bucket = buck) # Bucket name defined above  
 
 
 # Map 9.16 - map of difference in mean age - categorical 2010/11
@@ -330,8 +336,7 @@ map9_16
 s3write_using(map9_16 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
               , object = 'outputs/map9_16_meanage_diff2010-11_cat_ldn.tiff' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
-
+              , bucket = buck) # Bucket name defined above  
 
 
 # Map 9.17 - map of median age among residents living at same address one year ago
@@ -348,7 +353,7 @@ map9_17
 s3write_using(map9_17 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
               , object = 'outputs/map9_17_medianage_nonmovers.tiff' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+              , bucket = buck) # Bucket name defined above  
 
 
 
@@ -366,7 +371,7 @@ map9_18
 s3write_using(map9_18 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
               , object = 'outputs/map9_18_medianage_inmigs.tiff' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+              , bucket = buck_main) # Bucket name defined above  
 
 
 
@@ -384,7 +389,7 @@ map9_19
 s3write_using(map9_19 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
               , object = 'outputs/map9_19_medianage_outmigs.tiff' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+              , bucket = buck_main) # Bucket name defined above  
 
 
 # Map 9.20 - map of difference in median age of inmigrants and outmigrants
@@ -401,7 +406,7 @@ map9_20
 s3write_using(map9_20 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
               , object = 'outputs/map9_20_medianage_diffinoutmig.tiff' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+              , bucket = buck_main) # Bucket name defined above  
 
 
 # Map 9.21 - map of median age of usual residents in 2010
@@ -418,8 +423,7 @@ map9_21
 s3write_using(map9_21 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
               , object = 'outputs/map9_21_medianage_usualres10.tiff' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
-
+              , bucket = buck_main) # Bucket name defined above 
 
 # Map 9.22 - map of median age of usual residents in 2011
 map9_22 <- tm_shape(msoa_shp) +
@@ -435,7 +439,7 @@ map9_22
 s3write_using(map9_22 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
               , object = 'outputs/map9_22_medianage_usualres11.tiff' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+              , bucket = buck_main) # Bucket name defined above  
 
 
 # Map 9.23 - map of difference in median age 2010-11
@@ -452,6 +456,4 @@ map9_23
 s3write_using(map9_23 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
               , object = 'outputs/map9_23_medianage_diff2010-11.tiff' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
-
-
+              , bucket = buck_main) # Bucket name defined above  
