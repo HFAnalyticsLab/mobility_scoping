@@ -123,46 +123,49 @@ clean_dta<-health_dta %>%
   dplyr::select(c("date", "geography", "geography_code",contains(c("netmigration"))))
 
 
-# Classify local authorities based on over/under median net migration in each health status group across LAs
+# Classify local authorities based on over/under median net migration in each health status group across LAs --------
 
 summ(clean_dta$netmigration_limlot) # median net migration 0.232
 summ(clean_dta$netmigration_limlit) # median net migration 0.298
 summ(clean_dta$netmigration_notlim) # median net migration 0.755
 
+a<-median(clean_dta$netmigration_limlot)
+b<-median(clean_dta$netmigration_limlit)
+c<-median(clean_dta$netmigration_notlim)
 
 #examine types of areas
 # 348 LAs
-sum(clean_dta$netmigration_limlot <0.232 & clean_dta$netmigration_limlit <0.298 & clean_dta$netmigration_notlim <0.755 , na.rm=TRUE)
-# 69 have net migration below median in all health groups
-sum(clean_dta$netmigration_limlot >0.232 & clean_dta$netmigration_limlit >0.298 & clean_dta$netmigration_notlim >0.755 , na.rm=TRUE)
+sum(clean_dta$netmigration_limlot <a & clean_dta$netmigration_limlit <b & clean_dta$netmigration_notlim <c , na.rm=TRUE)
+# 70 have net migration below median in all health groups
+sum(clean_dta$netmigration_limlot >a & clean_dta$netmigration_limlit >b & clean_dta$netmigration_notlim >c , na.rm=TRUE)
 # 68 have net migration above median in all health groups
-sum(clean_dta$netmigration_limlot <0.232 & clean_dta$netmigration_limlit <0.298 & clean_dta$netmigration_notlim >0.755 , na.rm=TRUE)
-# 45 have net migration above median for healthy but net migration below median for both other groups
-sum(clean_dta$netmigration_limlot >0.232 & clean_dta$netmigration_notlim <0.755 , na.rm=TRUE)
+sum(clean_dta$netmigration_limlot <a & clean_dta$netmigration_limlit <b & clean_dta$netmigration_notlim >c , na.rm=TRUE)
+# 44 have net migration above median for healthy but net migration below median for both other groups
+sum(clean_dta$netmigration_limlot >a & clean_dta$netmigration_notlim <c , na.rm=TRUE)
 # 90 have net migration above median among unhealthy but below median for healthy (regardless of what limlit does)
-sum(clean_dta$netmigration_limlot <0.232 & clean_dta$netmigration_limlit >0.298  & clean_dta$netmigration_notlim >0.755 , na.rm=TRUE)
+sum(clean_dta$netmigration_limlot <a & clean_dta$netmigration_limlit >b  & clean_dta$netmigration_notlim >c , na.rm=TRUE)
 # 46 have net migration above median for healthy/limlit but below median for limlot
-sum(clean_dta$netmigration_limlot >0.232 & clean_dta$netmigration_limlit <0.298  & clean_dta$netmigration_notlim >0.755 , na.rm=TRUE)
+sum(clean_dta$netmigration_limlot >a & clean_dta$netmigration_limlit <b  & clean_dta$netmigration_notlim >c , na.rm=TRUE)
 # 16
+
 
 
 # binary variables for above/below median
 clean_dta <- clean_dta %>%
-  mutate(above_median_limlot = case_when(netmigration_limlot<=0.232 ~ 0,
-                   TRUE ~ 1), 
-         above_median_limlit = case_when(netmigration_limlit<=0.298 ~ 0,
-                    TRUE ~1),
-         above_median_notlim = case_when(netmigration_notlim<=0.755 ~ 0,
-                    TRUE ~ 1))
-
+  mutate(above_median_limlot = case_when(netmigration_limlot<=a ~ 0,
+                                         TRUE ~ 1), 
+         above_median_limlit = case_when(netmigration_limlit<=b ~ 0,
+                                         TRUE ~1),
+         above_median_notlim = case_when(netmigration_notlim<=c ~ 0,
+                                         TRUE ~ 1))
 
 # classification
 clean_dta <- clean_dta %>%
   mutate(health_mig = case_when(
-              netmigration_limlot <=0.232& netmigration_notlim <=0.755 ~ "Net migration below median for all health groups",
-              netmigration_limlot >0.232 & netmigration_notlim >0.755 ~ "Net migration above median for all health groups",
-              netmigration_limlot >0.232 & netmigration_notlim <=0.755 ~ "Net migration above median - less healthy",
-              netmigration_limlot <=0.232 & netmigration_notlim >0.755 ~ "Net migration above median - more healthy"))
+    netmigration_limlot <=a& netmigration_notlim <=c ~ "Net migration below median for all health groups",
+    netmigration_limlot >a & netmigration_notlim >c ~ "Net migration above median for all health groups",
+    netmigration_limlot >a & netmigration_notlim <=c ~ "Net migration above median - less healthy",
+    netmigration_limlot <=a & netmigration_notlim >c ~ "Net migration above median - more healthy"))
 
 tabyl(clean_dta$health_mig)
 
@@ -182,7 +185,7 @@ t<-boxplot(net_migration~metric,data=ea_dta_plot, main="Net Migration by Health 
 
 
 
-# Calculate net migration by Levelling Up priority category
+# Calculate net migration by Levelling Up priority category ---------------
     #note: this analysis was not included in the final piece
 # Import Levelling Up data
     #data were downloaded from https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwjyroCDndj6AhWGUcAKHVAtCNsQFnoECAsQAQ&url=https%3A%2F%2Fassets.publishing.service.gov.uk%2Fgovernment%2Fuploads%2Fsystem%2Fuploads%2Fattachment_data%2Ffile%2F966137%2FLevelling_Up_Fund_list_of_local_authorities_by_priority_category.xlsx&usg=AOvVaw3NIQ1EBTwu0jLNSisnn3XT 
@@ -237,10 +240,11 @@ tibble_health
 s3write_using(tibble_health # What R object we are saving
               , FUN = write_csv # Which R function we are using to save
               , object = 'outputs/table_netmigration_health_levellingup.csv' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name 
+              , bucket = buck_main) # Bucket name 
 
 
-# Calculate net migration by IMD 
+# Calculate net migration by IMD ------------------------------------------
+
     #note: this analysis was not included in the final piece
 # Import IMD data
     #data were downloaded from https://www.gov.uk/government/statistics/english-indices-of-deprivation-2019
@@ -304,7 +308,7 @@ s3write_using(tibble_health2 # What R object we are saving
 
 
 
-
+# Make maps ---------------------------------------------------------------
 # Join spatial data
 lad_shp <- left_join(lad_shp,clean_dta , by = c("lad11nm" = "geography"))
 # geography.code is the LAD code in the eng_dta df and lad11cd the code in the shapefile data

@@ -134,6 +134,8 @@ ea_dta<-ea_dta %>%
   dplyr::select(contains (c("geography", "geography_code", "netmigration")))
 
 
+# Classify net migration compared to median  -------------------------------------------------
+
 # Drop Scotland and Northern Ireland
 ea_dta <- ea_dta %>%
   subset(str_detect(geography_code, '^E') | str_detect(geography_code, '^W'))
@@ -144,23 +146,26 @@ summary(ea_dta$ea_student_netmigration) # med = -6.958
 summary(ea_dta$ei_student_netmigration) # med = -7.804
 summary(ea_dta$student_netmigration) #-7.243
 
+a<-median(ea_dta$ea_netmigration)
+b<-median(ea_dta$ei_netmigration)
+c<-median(ea_dta$ea_student_netmigration)
+d<-median(ea_dta$ei_student_netmigration)
+e<-median(ea_dta$student_netmigration)
 
   # NOTE: changed cut-offs since including Wales gave us slightly different medians
 
 ea_dta <- ea_dta %>%
   mutate(EA_mig = case_when(
-    ea_netmigration <=1.016 & ei_netmigration <=0.575 & student_netmigration <=-7.243 ~ "Below median net migration - all groups",
-    ea_netmigration >1.016 & ei_netmigration >0.575 &student_netmigration> -7.243 ~ "Above median net migration - all groups",
-    ea_netmigration >1.016 & ei_netmigration <=0.575 &student_netmigration<= -7.243~ "Above median net migration - Economically active",
-    ea_netmigration <=1.016 & ei_netmigration >0.575 &student_netmigration<= -7.243 ~ "Above median net migration - Economically inactive", 
-    ea_netmigration <=1.016 & ei_netmigration <=0.575 &student_netmigration> -7.243 ~ "Above median net migration - Students",
-    ea_netmigration <=1.016 & ei_netmigration >0.575 &student_netmigration> -7.243 ~ "Below median net migration - Economically active only",
-    ea_netmigration >1.016 & ei_netmigration <=0.575 &student_netmigration> -7.243 ~ "Below median net migration - Economically inactive only",
-    ea_netmigration >1.016 & ei_netmigration >0.575 &student_netmigration<= -7.243 ~ "Below median net migration - Students only"))
+    ea_netmigration <=a & ei_netmigration <=b & student_netmigration <=e ~ "Below median net migration - all groups",
+    ea_netmigration >a & ei_netmigration >b &student_netmigration> e ~ "Above median net migration - all groups",
+    ea_netmigration >a & ei_netmigration <=b &student_netmigration<= e~ "Above median net migration - Economically active",
+    ea_netmigration <=a & ei_netmigration >b &student_netmigration<= e ~ "Above median net migration - Economically inactive", 
+    ea_netmigration <=a & ei_netmigration <=b &student_netmigration> e ~ "Above median net migration - Students",
+    ea_netmigration <=a & ei_netmigration >b &student_netmigration> e ~ "Below median net migration - Economically active only",
+    ea_netmigration >a & ei_netmigration <=b &student_netmigration> e ~ "Below median net migration - Economically inactive only",
+    ea_netmigration >a & ei_netmigration >b &student_netmigration<= e ~ "Below median net migration - Students only"))
 
 tabyl(ea_dta$EA_mig)
-
-
 
 # Save data
 s3write_using(ea_dta # R object to be saved
@@ -170,7 +175,7 @@ s3write_using(ea_dta # R object to be saved
 
 
 
-# Calculate net migration by Levelling Up priority category
+# Calculate net migration by Levelling Up priority category ---------------
     #note: this analysis was not included in the final piece
 # Import Levelling Up data
     #data were downloaded from https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwjyroCDndj6AhWGUcAKHVAtCNsQFnoECAsQAQ&url=https%3A%2F%2Fassets.publishing.service.gov.uk%2Fgovernment%2Fuploads%2Fsystem%2Fuploads%2Fattachment_data%2Ffile%2F966137%2FLevelling_Up_Fund_list_of_local_authorities_by_priority_category.xlsx&usg=AOvVaw3NIQ1EBTwu0jLNSisnn3XT 
@@ -228,7 +233,8 @@ s3write_using(tibble_ea # What R object we are saving
               , bucket = buck_main) # Bucket name 
 
 
-# Calculate net migration by IMD 
+
+# Calculate net migration by IMD  -----------------------------------------
     #note: this analysis was not included in the final piece
 # Import IMD data
     #data were downloaded from https://www.gov.uk/government/statistics/english-indices-of-deprivation-2019
@@ -293,6 +299,7 @@ s3write_using(tibble_ea2 # What R object we are saving
 
 
 
+# Make maps ---------------------------------------------------------------
 
 # load packages
 pacman::p_load(sf,
