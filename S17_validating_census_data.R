@@ -54,7 +54,8 @@ t<-boxplot(RMIx2020~year,data=cdrc_plot, main="Net Migration by Year",
 
 # Migration data ----------------------------------------------------------
 
-
+#data were downloaded from https://www.nomisweb.co.uk/census/2011/ukmig008 
+    # download -> local authority: district/unitary (prior to April 2015)
 eng_dta <- s3read_using(import # Which function are we using to read
                         , object = 'la_migration.csv' # File to open
                         , bucket = buck) # Bucket name defined above
