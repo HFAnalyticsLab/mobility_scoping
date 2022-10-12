@@ -6,6 +6,9 @@
 # clear R environment
 rm(list = ls())
 
+# run script with bucket names
+source("0_file_pathways.R") 
+
 #load packages
 library(data.table)
 library(aws.s3)
@@ -26,15 +29,14 @@ pacman::p_load(haven,
                readr)
 
 
-  # NOTE: Census migration data not available at LSOA level
-    # we can reconstruct it using lookup tables
+  
+# NOTE: Census migration data not available at LSOA level
+    # can be reconstructed using lookup tables
   
 # Prepare lookup table data
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping' ## my bucket name
-
 lookup <- s3read_using(import # Which function are we using to read
-                        , object = 'data/PCD11_OA11_LSOA11_MSOA11_LAD11_EW_LU_aligned_v2.csv' # File to open
-                        , bucket = buck) # Bucket name defined above
+                        , object = 'PCD11_OA11_LSOA11_MSOA11_LAD11_EW_LU_aligned_v2.csv' # File to open
+                        , bucket = buck_data) # Bucket name defined above
 
 
 # drop columns don't need
@@ -43,8 +45,8 @@ lookup <- lookup %>%
 
 # merge on to eng_dta (created in script 1)
 eng_dta <- s3read_using(import # Which function are we using to read
-                        , object = 'data/clean/eng_dta_OA.RDS' # File to open
-                        , bucket = buck) # Bucket name defined above
+                        , object = 'eng_dta_OA.RDS' # File to open
+                        , bucket = buck_clean) # Bucket name defined above
 
 eng_dta <- left_join(lookup, eng_dta, by = c("OA11CD" = "geography"))
 
@@ -74,7 +76,7 @@ eng_dta <- eng_dta %>%
 
 # drop Wales rows
 eng_dta <- eng_dta %>%
-  subset(str_detect(LSOA11CD, 'E'))
+  subset(str_detect(LSOA11CD, '^E'))
 
 dim(eng_dta)
 
@@ -114,23 +116,27 @@ sum(is.na(eng_dta$mob_cat))
 # load packages
 pacman::p_load(sf,
                XML,
-               tmap,
-               THFstyle)
+               tmap)
 
 # import shapefile data
-# import shp data
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LSOA_shapefile_data/Lower_Layer_Super_Output_Areas__December_2011__Boundaries_Full_Extent__BFE__EW_V3.shp',
-            file = here::here("shapefiles", "eng.shp"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LSOA_shapefile_data/Lower_Layer_Super_Output_Areas__December_2011__Boundaries_Full_Extent__BFE__EW_V3.cpg',
-            file = here::here("shapefiles", "eng.cpg"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LSOA_shapefile_data/Lower_Layer_Super_Output_Areas__December_2011__Boundaries_Full_Extent__BFE__EW_V3.dbf',
-            file = here::here("shapefiles", "eng.dbf"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LSOA_shapefile_data/Lower_Layer_Super_Output_Areas__December_2011__Boundaries_Full_Extent__BFE__EW_V3.prj',
-            file = here::here("shapefiles", "eng.prj"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LSOA_shapefile_data/Lower_Layer_Super_Output_Areas__December_2011__Boundaries_Full_Extent__BFE__EW_V3.shx',
-            file = here::here("shapefiles", "eng.shx"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LSOA_shapefile_data/Lower_Layer_Super_Output_Areas__December_2011__Boundaries_Full_Extent__BFE__EW_V3.xml',
-            file = here::here("shapefiles", "eng.xml"))
+save_object(object = 'LSOA_shapefile_data/Lower_Layer_Super_Output_Areas__December_2011__Boundaries_Full_Extent__BFE__EW_V3.shp',
+            file = here::here("shapefiles", "eng.shp"), 
+            bucket = buck_data)
+save_object(object = 'LSOA_shapefile_data/Lower_Layer_Super_Output_Areas__December_2011__Boundaries_Full_Extent__BFE__EW_V3.cpg',
+            file = here::here("shapefiles", "eng.cpg"), 
+            bucket = buck_data)
+save_object(object = 'LSOA_shapefile_data/Lower_Layer_Super_Output_Areas__December_2011__Boundaries_Full_Extent__BFE__EW_V3.dbf',
+            file = here::here("shapefiles", "eng.dbf"), 
+            bucket = buck_data)
+save_object(object = 'LSOA_shapefile_data/Lower_Layer_Super_Output_Areas__December_2011__Boundaries_Full_Extent__BFE__EW_V3.prj',
+            file = here::here("shapefiles", "eng.prj"), 
+            bucket = buck_data)
+save_object(object = 'LSOA_shapefile_data/Lower_Layer_Super_Output_Areas__December_2011__Boundaries_Full_Extent__BFE__EW_V3.shx',
+            file = here::here("shapefiles", "eng.shx"), 
+            bucket = buck_data)
+save_object(object = 'LSOA_shapefile_data/Lower_Layer_Super_Output_Areas__December_2011__Boundaries_Full_Extent__BFE__EW_V3.xml',
+            file = here::here("shapefiles", "eng.xml"), 
+            bucket = buck_data)
 
 
 # read LSOA boundaries
@@ -168,7 +174,7 @@ map3_1
 s3write_using(map3_1 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
               , object = 'outputs/map3_1_mobility_LSOA.tiff' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above
+              , bucket = buck_main) # Bucket name defined above
 
 
 
@@ -197,6 +203,6 @@ map3_2
 s3write_using(map3_2 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
               , object = 'outputs/map3_2_mobility_London.tiff' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above
+              , bucket = buck_main) # Bucket name defined above
 
 

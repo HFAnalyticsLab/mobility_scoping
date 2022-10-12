@@ -1,15 +1,17 @@
 ## Preliminary maps - Middle Layer Super Output Area level
-# Run this script after 04_mobility_data_prep_MSOA
+# Run this script after S4_mobility_data_prep_MSOA
 
 # Housekeeping
 # clear R environment
 rm(list = ls())
 
+# run script with bucket names
+source("0_file_pathways.R") 
+
 # load packages
 pacman::p_load(sf,
                XML,
-               tmap,
-               THFstyle)
+               tmap)
 
 # read OA boundaries
     # Option 1: manually download all data to "shapefiles" folder in R workspace
@@ -18,18 +20,24 @@ pacman::p_load(sf,
 
 # Option 2: trying command above with save_object to save directly into R workspace without manually downloading
   # Need to download all 6 files in folder for .shp to load correctly
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.shp',
-            file = here::here("shapefiles", "eng.shp"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.cpg',
-            file = here::here("shapefiles", "eng.cpg"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.dbf',
-            file = here::here("shapefiles", "eng.dbf"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.prj',
-            file = here::here("shapefiles", "eng.prj"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.shx',
-            file = here::here("shapefiles", "eng.shx"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.xml',
-            file = here::here("shapefiles", "eng.xml"))
+save_object(object = 'MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.shp',
+            file = here::here("shapefiles", "eng.shp"), 
+            bucket = buck_data)
+save_object(object = 'MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.cpg',
+            file = here::here("shapefiles", "eng.cpg"), 
+            bucket = buck_data)
+save_object(object = 'MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.dbf',
+            file = here::here("shapefiles", "eng.dbf"), 
+            bucket = buck_data)
+save_object(object = 'MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.prj',
+            file = here::here("shapefiles", "eng.prj"),
+            bucket = buck_data)
+save_object(object = 'MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.shx',
+            file = here::here("shapefiles", "eng.shx"), 
+            bucket = buck_data)
+save_object(object = 'MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.xml',
+            file = here::here("shapefiles", "eng.xml"), 
+            bucket = buck_data)
 
 # load shp data
 msoa_shp <- st_read(here::here("shapefiles", "eng.shp"))
@@ -38,11 +46,9 @@ str(msoa_shp)
 
 
 #load mobility MSOA data
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping' ## my bucket name
-
 eng_dta<-s3read_using(readRDS # Which function are we using to read
-             , object = 'data/clean/eng_dta_MSOA.RDS' # File to open
-             , bucket = buck) # Bucket name defined above
+             , object = 'eng_dta_MSOA.RDS' # File to open
+             , bucket = buck_clean) # Bucket name defined above
 
 
 
@@ -87,17 +93,17 @@ map5_1
 s3write_using(map5_1 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
               , object = 'outputs/map5_1_mobility_MSOA.tiff' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+              , bucket = buck_main) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
   # + scale_fill_manual to set category colours manually
 
 
 # Make maps for selected metro areas - London
 msoa_shp %>% 
-  filter(substring(MSOA11CD, 2) < '02000983' & str_detect(MSOA11CD, 'E')) %>%
+  filter(substring(MSOA11CD, 2) < '02000983' & str_detect(MSOA11CD, '^E')) %>%
   tabyl(MSOA11NM)
 
 ldn_msoa_shp <- msoa_shp %>% 
-  dplyr::filter(, substring(MSOA11CD, 2) < '02000983' & str_detect(MSOA11CD, 'E')) 
+  dplyr::filter(, substring(MSOA11CD, 2) < '02000983' & str_detect(MSOA11CD, '^E')) 
 
 
 
@@ -115,11 +121,11 @@ map5_2
 s3write_using(map5_2 # What R object we are saving
               , FUN = tmap_save # Which R function we are using to save
               , object = 'outputs/map5_2_mobility_MSOA.tiff' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
+              , bucket = buck_main) # Bucket name defined above  # Note: need to figure out how to export maps with sw3 commands
 
 
 
-# Closer look at Hackney out of curiosity
+# Looking at single local authority e.g. Hackney
 test <- msoa_shp %>% 
   dplyr::filter(, str_detect(MSOA11NM, 'Hackney')) 
 tm_shape(test) +

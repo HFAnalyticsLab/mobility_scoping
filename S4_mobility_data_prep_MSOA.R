@@ -4,6 +4,9 @@
 # clear R environment
 rm(list = ls())
 
+# run script with bucket names
+source("0_file_pathways.R") 
+
 #load packages
 pacman::p_load(haven, 
                dplyr, 
@@ -11,7 +14,6 @@ pacman::p_load(haven,
                janitor,
                questionr, 
                epiDisplay, 
-               epirhandbook,
                rio, 
                ggplot2, 
                apyramid,
@@ -27,7 +29,8 @@ here()
 # import all data
 ## data were downloaded from: https://www.nomisweb.co.uk/census/2011/ukmig008
 eng_dta <- s3read_using(import, 
-                        object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/censusmig_MSOA_England.csv') # File to open 
+                        object = 'censusmig_MSOA_England.csv', 
+                        bucket = buck_data) # File to open 
 
 dim(eng_dta)      #24 variables, 7201 observations
 table(eng_dta$date)
@@ -86,7 +89,7 @@ sum(!is.na(eng_dta$prop_samead_1y))
 
 # Identify areas of net outmigration
 # these are areas where total migrants is smaller than outmigrants
-eng_dta$net_outmig <- ifelse(eng_dta$n_outmig > eng_dta$n_totalmig, 1, 0)
+eng_dta$net_outmig <- ifelse(eng_dta$n_outmig > eng_dta$n_inmig, 1, 0)
 
 # Recreate Brown 2010 classification
 # Identify areas of 10% + net increase (using previous year's residents as denominator)
@@ -137,11 +140,8 @@ tabyl(eng_dta$mob_cat, show_missing_levels = T)
 sum(is.na(eng_dta$mob_cat))
 
 #Save dataset 
-
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping' ## my bucket name
-
 s3write_using(eng_dta # What R object we are saving
               , FUN = write_rds # Which R function we are using to save
-              , object = 'data/clean/eng_dta_MSOA.RDS' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above
+              , object = 'eng_dta_MSOA.RDS' # Name of the file to save to (include file type)
+              , bucket = buck_clean) # Bucket name defined above
 
