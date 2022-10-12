@@ -301,7 +301,6 @@ s3write_using(tibble_ea2 # What R object we are saving
 pacman::p_load(sf,
                XML,
                tmap,
-               THFstyle,
                devtools, 
                viridis)
 

@@ -48,7 +48,7 @@ ea <- s3read_using(FUN = fread,
                                              ei_netmigration,
                                              student_netmigration)]
 
-#load data on overall net migration in local authorities 
+#load data on overall net migration in local authorities (created in script S17)
 netmig <- s3read_using(FUN = fread,
                        object = 'Francesca/mobility_scoping/data/clean/net_migration_LAD.csv',
                        bucket = data_bucket)[, .(geography,
@@ -181,18 +181,18 @@ ggbiplot(pca, groups = as.character(fit$cluster), labels = rownames(data), choic
   xlab('PC3 - ei and older group migration') +
   ylab('PC4 - healthy and younger group migration')
 
-<<<<<<< HEAD
-data$cluster <- fit$cluster
+#<<<<<<< HEAD
+#data$cluster <- fit$cluster
 
-cluster1 <- data[data$cluster == 2, -10]
+#cluster1 <- data[data$cluster == 2, -10]
 ## PCA
-pca_1 <- prcomp(cluster1, center = TRUE)
-summary(pca_1)
-str(pca_1)
+#pca_1 <- prcomp(cluster1, center = TRUE)
+#summary(pca_1)
+#str(pca_1)
 
-ggbiplot(pca_1)
-ggbiplot(pca_1, labels = rownames(cluster1))
-=======
+#ggbiplot(pca_1)
+#ggbiplot(pca_1, labels = rownames(cluster1))
+#=======
   
   
   
@@ -202,7 +202,6 @@ ggbiplot(pca_1, labels = rownames(cluster1))
   pacman::p_load(sf,
                  XML,
                  tmap,
-                 THFstyle,
                  devtools, 
                  viridis, 
                  wesanderson)
@@ -244,10 +243,10 @@ data <- data %>%
 # Edit cluster variable
 data <- data %>% 
   mutate(cluster_lab = case_when(
-    cluster ==3 ~ "Outliers",
+    cluster ==2 ~ "Outliers",
     cluster == 4 ~ "Not younger/healthier/students",
-    cluster == 2 ~ "General low net migration", 
-    cluster == 1 ~ "Younger/healthier/students"
+    cluster == 1 ~ "General low net migration", 
+    cluster == 3 ~ "Younger/healthier/students"
   ))
 
 tabyl(data$cluster)
@@ -271,8 +270,8 @@ lad_shp <- left_join(lad_shp, data, by = c("lad11nm" = "geography"))
 tabyl(lad_shp$cluster)
 
 
-# Map of age migration classification
-map17_1 <- tm_shape(lad_shp) +
+# Map of residential mobility classification
+map4_1 <- tm_shape(lad_shp) +
   tm_borders(, alpha=0) +
   tm_fill(col = "cluster_lab", style = "cat", palette =  c('#744284',  '#53a9cd' , '#dd0031', '#F39214'), title = "Mobility clusters") +
   tm_layout(legend.title.size = 1,
@@ -280,154 +279,9 @@ map17_1 <- tm_shape(lad_shp) +
             legend.position = c("left","top"),
             legend.bg.color = "white",
             legend.bg.alpha = 1)
-map17_1
-
-
-
-# Merge with previous classification to check differences
-data_v1 <- s3read_using(import, 
-                       object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean/mobility_clusters_LA.csv') # File to open 
-
-data_v1 <- data_v1 %>%
-  rename( cluster_v1 = cluster) %>%
-  rename(cluster_lab_v1 = cluster_lab) %>%
-  dplyr::select('geography', 'cluster_v1', 'cluster_lab_v1')
-
-
-data <- left_join(data_v1, data, by = c("geography" = "geography"))
-
-tabyl(data, cluster, cluster_v1)
-
-#change coding so they match in both data sources
-data <- data %>%
-  mutate(cluster_v1 = case_when(
-    cluster_v1 == 1 ~ 3,
-    cluster_v1 == 2 ~ 4,
-    cluster_v1 == 3 ~ 2,
-    cluster_v1 == 4 ~ 1
-  ))
-
-tabyl(data, cluster, cluster_v1)
-# only 7 LAs have different categories for both sets of cluster analysis
-
-data <- data %>%
-  mutate(diff = cluster != cluster_v1)
-
-data %>%
-  dplyr::filter(diff == 1) %>%
-  dplyr::select('geography', starts_with('cluster')) %>%
-  print()
-    # changed for middlesbrough, Amber Valley, Padby and Wigston, North Kesteven, Hounslow, Wokingham, Powys
-
-
-
-## FC stopped here - below not updated until previous code checked
-
-
-
-#Merge with life expectancy data
-## data were downloaded from: https://www.nomisweb.co.uk/census/2011/ukmig006
-le_dta <- s3read_using(import, 
-                       object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/life_expectancy_LA.xlsx') # File to open 
-
-dim(le_dta)      #55 variables, 16842 observations
-
-# tidy variables names
-le_dta<-le_dta %>% 
-  clean_names() 
-#remove spaces so that we can refer to column names in functions
-
-
-le_dta <- le_dta %>%
-  dplyr::filter(x4 == "00-01")
-
-le_dta <- le_dta %>%
-  dplyr::select("title", "life_expectancy_by_local_authority", x3, le_2010_12 = x32, le_2017_19 = x53)
-
-le_dta$le_2010_12 <- as.numeric(le_dta$le_2010_12)
-le_dta$le_2017_19 <- as.numeric(le_dta$le_2017_19)
-
-le_dta <- le_dta %>%
-  pivot_wider(names_from = x3, values_from = c(le_2010_12, le_2017_19))
-
-
-
-# Drop Scotland and Northern Ireland
-le_dta <- le_dta %>%
-  subset(str_detect(life_expectancy_by_local_authority, '^E') | str_detect(life_expectancy_by_local_authority, '^W'))
-
-le_dta <- left_join(le_dta, data, by = c("title" = "geography"))
-
-tabyl(le_dta$cluster)
-# 13% missing data due to change in LA boundaries between 2020 and 2011
+map4_1
 
 
 
 
-# Save data
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
-
-s3write_using(le_dta # What R object we are saving
-              , FUN = write.csv # Which R function we are using to save
-              , object = 'mobility_clusters_le_LA.csv' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above
-
-
-
-
-#Merge with 2012 life expectancy data to minimise missing values
-## data were downloaded from: https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/lifeexpectancies/datasets/lifeexpectancyatbirthandatage65bylocalareasintheunitedkingdomtable1ukandlocalareasinenglandandwales
-le2012_dta <- s3read_using(import, 
-                           object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/life_expectancy_LA_2012_prep.xlsx') # File to open 
-
-dim(le2012_dta)      #7 variables, 449 observations
-
-# tidy variables names
-le2012_dta<-le2012_dta %>% 
-  clean_names() 
-#remove spaces so that we can refer to column names in functions
-
-# drop rows with missing values (formatting)
-le2012_dta <- le2012_dta %>%
-  drop_na(female_2009_2011) %>%
-  dplyr::select(-area_name) 
-
-le2012_dta$x3 <- gsub(" UA", "" , le2012_dta$x3)
-
-
-le2012_dta<- le2012_dta %>%
-  mutate(male_2009_2011 = round(as.numeric(male_2009_2011), 1), 
-         male_2010_2012 = round(as.numeric(male_2010_2012), 1),
-         female_2009_2011 = round(as.numeric(female_2009_2011), 1),
-         female_2010_2012 = round(as.numeric(female_2010_2012), 1))
-
-tabyl(le2012_dta$male_2009_2011)
-# only 2 LAs with missing data
-
-
-# merge onto data df
-data <- left_join(data, le2012_dta, by = c("geography" = "x3"))
-tabyl(data$male_2009_2011)
-
-
-# remove weight variables and re-merge original net migration variables
-data <- data %>%
-  dplyr::select(cluster:female_2010_2012)
-
-data <- left_join(data, health, by = c("geography" = "geography"))
-data <- left_join(data, age, by = c("geography" = "geography"))
-data <- left_join(data, ea, by = c("geography" = "geography"))
-
-data <- data %>%
-  dplyr::select(-geography_code.x, -geography_code.y, -geography_code)
-
-
-
-# Save data
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
-
-s3write_using(data # What R object we are saving
-              , FUN = write.csv # Which R function we are using to save
-              , object = 'mobility_clusters_le2012_LA.csv' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above
 

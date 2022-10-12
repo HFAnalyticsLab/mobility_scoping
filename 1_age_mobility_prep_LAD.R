@@ -3,6 +3,8 @@
 # clear R environment
 rm(list = ls())
 
+# run script with bucket names
+source("0_file_pathways.R") 
 
 #load packages
 pacman::p_load(haven, 
@@ -25,7 +27,8 @@ pacman::p_load(haven,
 ## data were downloaded from: https://www.nomisweb.co.uk/census/2011/ukmig001
       # download > local authorities: district / unitary (prior to April 2015)
 age_dta <- s3read_using(import, 
-                        object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/censusmig_age_sex_LAD.csv') # File to open 
+                        object = 'censusmig_age_sex_LAD.csv', 
+                        bucket = buck_data) # File to open 
 
 dim(age_dta)      #303 variables, 406 observations
 
@@ -39,7 +42,7 @@ age_dta<-age_dta %>%
 age_dta <- age_dta %>%
   subset(str_detect(geography_code, '^E') | str_detect(geography_code, '^W'))
 
-dim(age_dta)      #43 variables, 348 observations
+dim(age_dta)      #303 variables, 348 observations
 
 
 # renaming columns for same address (n_samead), moved within the local authority (n_movedwithin), inmigrants (n_inmig) and outmigrants (n_outmig)
@@ -147,23 +150,19 @@ tabyl(age_dta$age_mig)
 clean_dta<-age_dta %>% 
   dplyr::select(c("geography", "geography_code",contains(c("netmigration")), "age_mig"))
 
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/clean' ## my bucket name
-
 s3write_using(age_dta # R object to save
               , FUN = write.csv # function used to save
               , object = 'age_net_migration_LA.csv' # Name of file to save 
-              , bucket = buck) # Bucket name defined above
+              , bucket = buck_clean) # Bucket name
 
 
 # Calculate net migration by Levelling Up priority category
     #note: this analysis was not included in the final piece
 # Import Levelling Up data
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping' ## my bucket name
-
-#data were downloaded from https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwjyroCDndj6AhWGUcAKHVAtCNsQFnoECAsQAQ&url=https%3A%2F%2Fassets.publishing.service.gov.uk%2Fgovernment%2Fuploads%2Fsystem%2Fuploads%2Fattachment_data%2Ffile%2F966137%2FLevelling_Up_Fund_list_of_local_authorities_by_priority_category.xlsx&usg=AOvVaw3NIQ1EBTwu0jLNSisnn3XT 
+    #data were downloaded from https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwjyroCDndj6AhWGUcAKHVAtCNsQFnoECAsQAQ&url=https%3A%2F%2Fassets.publishing.service.gov.uk%2Fgovernment%2Fuploads%2Fsystem%2Fuploads%2Fattachment_data%2Ffile%2F966137%2FLevelling_Up_Fund_list_of_local_authorities_by_priority_category.xlsx&usg=AOvVaw3NIQ1EBTwu0jLNSisnn3XT 
 levup <-s3read_using(import # function used to read
                      , object = 'data/Levelling_Up_priority_areas/Levelling_Up_Fund_list_of_local_authorities_by_priority_category.xlsx' # File to open
-                     , bucket = buck) # Bucket name defined above
+                     , bucket = buck_main) # Bucket name 
 
 
 dim(levup)
@@ -212,7 +211,7 @@ tibble_age1
 s3write_using(tibble_age1 # What R object we are saving
               , FUN = write_csv # Which R function we are using to save
               , object = 'outputs/table_netmigration_age_levellingup.csv' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above
+              , bucket = buck_main) # Bucket name 
 
 
 
@@ -220,12 +219,10 @@ s3write_using(tibble_age1 # What R object we are saving
 # Calculate net migration by IMD 
     #note: this analysis was not included in the final piece
 # Import IMD data
-buck <- 'thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping' ## my bucket name
- 
-#data were downloaded from https://www.gov.uk/government/statistics/english-indices-of-deprivation-2019
+    #data were downloaded from https://www.gov.uk/government/statistics/english-indices-of-deprivation-2019
 imd <-s3read_using(import # Which function are we using to read
                      , object = 'data/IMD_LAD.xlsx' # File to open
-                     , bucket = buck) # Bucket name defined above
+                     , bucket = buck_main) # Bucket name 
 
 dim(imd)
 # 317 LAs in file
@@ -278,7 +275,7 @@ tibble_age2
 s3write_using(tibble_age2 # What R object we are saving
               , FUN = write_csv # Which R function we are using to save
               , object = 'outputs/table_netmigration_age_imd.csv' # Name of the file to save to (include file type)
-              , bucket = buck) # Bucket name defined above
+              , bucket = buck_main) # Bucket name 
 
 
 # Make maps of net migration by age
@@ -293,17 +290,23 @@ pacman::p_load(sf,
 # import shp data
     #data were downloaded from https://geoportal.statistics.gov.uk/search?collection=Dataset&sort=name&tags=all(BDY_LAD%2CDEC_2011)
 
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.shp',
+save_object(object = 'LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.shp',
+            bucket = buck_data,
             file = here::here("shapefiles", "eng.shp"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.cpg',
+save_object(object = 'LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.cpg',
+            bucket = buck_data,
             file = here::here("shapefiles", "eng.cpg"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.dbf',
+save_object(object = 'LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.dbf',
+            bucket = buck_data,
             file = here::here("shapefiles", "eng.dbf"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.prj',
+save_object(object = 'LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.prj',
+            bucket = buck_data,
             file = here::here("shapefiles", "eng.prj"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.shx',
+save_object(object = 'LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.shx',
+            bucket = buck_data,
             file = here::here("shapefiles", "eng.shx"))
-save_object(object = 's3://thf-dap-tier0-projects-iht-067208b7-projectbucket-1mrmynh0q7ljp/Francesca/mobility_scoping/data/LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.xml',
+save_object(object = 'LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.xml',
+            bucket = buck_data,
             file = here::here("shapefiles", "eng.xml"))
 
 # read LAD boundaries
@@ -340,5 +343,5 @@ map1_1
 s3write_using(map1_1 # R object to save
               , FUN = tmap_save # R function used to save
               , object = 'outputs/map12_1_age_netmigration.tiff' # Name of file to save 
-              , bucket = buck) # Bucket name defined above  
+              , bucket = buck_main) # Bucket name 
 
