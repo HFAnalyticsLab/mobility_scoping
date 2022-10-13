@@ -57,6 +57,8 @@ lsoa_shp <- lsoa_shp %>%
 
 
 #Prep CDRC data (only have LSOA or LAD)
+#data source: https://data.cdrc.ac.uk/dataset/cdrc-residential-mobility-index
+   #>cdrc residential mobility indext lsoa 1997-2020
 
 cdrc_lsoa<-s3read_using(read_csv # Which function are we using to read
                         , object = 'CDRC_residential_mobility_index_LSOA.csv' # File to open
