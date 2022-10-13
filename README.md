@@ -30,7 +30,7 @@ The exploratory_analyses folder includes scripts used for exploratory analyses, 
 These scripts were written in R. The following R packages (available on CRAN) are needed:
 - TBC
 
-## The Health Foundation Project team
+## The Health Foundation project team
 * Francesca Cavallaro
 * Anne Alarilla
 * Jay Hughes
