@@ -35,7 +35,7 @@ These scripts were written in R. The following R packages (available on CRAN) ar
 * Anne Alarilla
 * Jay Hughes
 
-Mai Stafford, David Finch and Charles Tallack were part of the project team and provided feedback which was used to update the code.
+Mai Stafford, David Finch and Charles Tallack as part of the project team provided feedback which was used to update the code.
 
 ## License
 This project is licensed under the [MIT License](https://github.com/HFAnalyticsLab/domcare_hospital_LBBD/blob/master/LICENSE).
