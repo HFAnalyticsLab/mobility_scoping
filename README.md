@@ -9,3 +9,5 @@ This analysis aims to describe residential mobility in England and Wales, accord
 ## Outputs
 The findings have been published on the Health Foundation website [add URL].
 
+## Data source
+We used open, area-level [detailed migration data](https://www.nomisweb.co.uk/sources/census_2011_ukmigration) from the 2011 Census. 
