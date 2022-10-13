@@ -28,7 +28,7 @@ These scripts can be used to perform a similar analysis using the 2021 Census da
 
 ### Requirements
 These scripts were written in R. The following R packages (available on CRAN) are needed:
-- TBC
+- [**tmap**](https://cran.r-project.org/web/packages/tmap/vignettes/tmap-getstarted.html)
 
 ## Repository authors
 * Francesca Cavallaro
