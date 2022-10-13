@@ -34,6 +34,8 @@ pacman::p_load(haven,
     # can be reconstructed using lookup tables
   
 # Prepare lookup table data
+# Data source: https://geoportal.statistics.gov.uk/datasets/ons::output-area-to-lower-layer-super-output-area-to-middle-layer-super-output-area-to-local-authority-district-december-2011-lookup-in-england-and-wales/about
+
 lookup <- s3read_using(import # Which function are we using to read
                         , object = 'PCD11_OA11_LSOA11_MSOA11_LAD11_EW_LU_aligned_v2.csv' # File to open
                         , bucket = buck_data) # Bucket name defined above
