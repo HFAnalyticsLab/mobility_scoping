@@ -26,3 +26,16 @@ These analyses were conducted within Amazon SW3, using S3 buckets.
 
 The exploratory_analyses folder includes scripts used for exploratory analyses, including analyses at the output area and middle-super output area levels, and supplementary analyses at the local authority level which were not included in the publication. 
 
+### Requirements
+These scripts were written in R. The following R packages (available on CRAN) are needed:
+- TBC
+
+## The Health Foundation Project team
+* Francesca Cavallaro
+* Anne Alarilla
+* Jay Hughes
+* Mai Stafford
+* Charles Tallack
+
+## License
+This project is licensed under the [MIT License](https://github.com/HFAnalyticsLab/domcare_hospital_LBBD/blob/master/LICENSE).
