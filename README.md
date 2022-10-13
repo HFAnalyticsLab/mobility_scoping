@@ -15,27 +15,27 @@ We used open, area-level [residential mobility data](https://www.nomisweb.co.uk/
 We also used data from Fingertips on the prevalence of [adult overweight/obesity](https://fingertips.phe.org.uk/profile/national-child-measurement-programme/data#page/4/gid/1938133368/ati/301/iid/93088/age/168/sex/4/cat/-1/ctp/-1/yrr/1/cid/4/tbm/1) and [common mental disorders](https://fingertips.phe.org.uk/search/common%20mental%20health#page/3/gid/1/pat/6/par/E12000001/ati/201/are/E06000047/iid/93495/age/164/sex/4/cat/-1/ctp/-1/yrr/1/cid/4/tbm/1). 
 
 ## How does it work? 
-All data used in this analysis are open data. We have indicated in the main analysis scripts links where the data can be downloaded. This code can be used to replicate our analysis at the local authority (district/unitary) level. 
+All data used in this analysis are open data. We have indicated in the main analysis scripts links where the data can be downloaded. This code can be used to replicate our analysis at the local authority (district/unitary) level, these scripts include sections of analysis which were not included in the publication; this has been specified where applicable. 
 
 - Script 1 includes the code for analysis of residential mobility by self-reported health. 
 - Script 2 includes the code for analysis of residential mobility by age.
 - Script 3 includes the code for analysis of residential mobility by economic activity. 
 - Script 4 includes the code for the cluster analysis, which we used to classify local authorities in 4 residential mobility types. 
 
-These analyses were conducted within Amazon SW3, using S3 buckets. 
-
 The exploratory_analyses folder includes scripts used for exploratory analyses, including analyses at the output area and middle-super output area levels, and supplementary analyses at the local authority level which were not included in the publication. 
+
+These scripts can be used to perform a similar analysis using the 2021 Census data once released in 2023, this would require downloading the new datasets and updating the scripts with them. We used Amazon SW3 storage, scripts may need to be updated based on local storage structure.
 
 ### Requirements
 These scripts were written in R. The following R packages (available on CRAN) are needed:
 - TBC
 
-## The Health Foundation project team
+## Repository authors
 * Francesca Cavallaro
 * Anne Alarilla
 * Jay Hughes
-* Mai Stafford
-* Charles Tallack
+
+Mai Stafford, David Finch and Charles Tallack were part of the project team and provided feedback which was used to update the code.
 
 ## License
 This project is licensed under the [MIT License](https://github.com/HFAnalyticsLab/domcare_hospital_LBBD/blob/master/LICENSE).
