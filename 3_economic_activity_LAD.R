@@ -19,7 +19,6 @@ pacman::p_load(haven,
                janitor,
                questionr, 
                epiDisplay, 
-               epirhandbook,
                rio, 
                ggplot2, 
                apyramid,
@@ -360,3 +359,4 @@ map3_1 <- tm_shape(lad_shp) +
             legend.bg.color = "white",
             legend.bg.alpha = 1)
 map3_1
+
