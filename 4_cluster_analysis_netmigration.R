@@ -7,20 +7,24 @@ rm(list = ls())
 source("0_file_pathways.R") 
 
 # load packages
-library(plyr)
-library(dplyr)
-library(tidyverse)
-library(factoextra)
-library(cluster)
-library(aws.s3)
-library(rio)
-library(data.table)
-library(devtools)
-#install_github('vqv/ggbiplot')
-library(ggbiplot)
-library(stringr)
-library(janitor)
-
+pacman::p_load(tidyverse, # general data manipulation & cluster analysis
+               factoextra,
+               cluster,
+               aws.s3,
+               rio,
+               data.table,
+               devtools,
+               ggbiplot,
+               janitor,
+               
+               sf, # mapping and vis
+               XML,
+               tmap,
+               devtools, 
+               viridis, 
+               wesanderson)
+               
+#install_github('vqv/ggbiplot') # only available on GitHub I believe
 
 # load data on net migration by age (created in script 1)
 age <- s3read_using(FUN = fread,
@@ -56,19 +60,6 @@ netmig <- s3read_using(FUN = fread,
                                                  geography_code,
                                                  netmigration)]
 
-setdiff(health$geography_code, age$geography_code)
-setdiff(age$geography_code, health$geography_code)
-
-setdiff(health$geography_code, ea$geography_code)
-setdiff(ea$geography_code, health$geography_code)
-
-setdiff(ea$geography_code, age$geography_code)
-setdiff(age$geography_code, ea$geography_code)
-
-setdiff(netmig$geography_code, age$geography_code)
-setdiff(netmig$geography_code, ea$geography_code)
-setdiff(netmig$geography_code, health$geography_code)
-
 # Create data frame with columns used in cluster analysis
 data <- age[health, on = 'geography_code'][ea, on = 'geography_code'][netmig, on = 'geography_code'][
   !is.na(geography), .(geography,
@@ -87,8 +78,6 @@ data <- age[health, on = 'geography_code'][ea, on = 'geography_code'][netmig, on
 # Move local authority name to row names
 row.names(data) <- data$geography
 data$geography <- NULL
-
-str(data)
 
 # scale net migration rates in each group
 data <- scale(data) %>% data.frame()
@@ -111,11 +100,6 @@ fit <- kmeans(data, 4, nstart = 25)
 # Merge clusters on to main data frame
 data$cluster <- fit$cluster
 
-# Plot clusters
-clusplot(data, fit$cluster, color=TRUE, shade=TRUE, main = 'LSOA Cluster Analysis',
-         labels=2, lines=0)
-
-
 # Describe highest and lowest scaled net migration rates in each of the four clusters
 aggregate(data, by=list(cluster=fit$cluster), min)
 aggregate(data, by=list(cluster=fit$cluster), max)
@@ -123,15 +107,14 @@ aggregate(data, by=list(cluster=fit$cluster), max)
 fit$size
 fit$centers
 
+# Plot clusters
 fviz_cluster(fit, data) +
   theme_minimal() + theme(legend.position = 'none') +
   ggtitle('Cluster analyis at LA level - population mobility factors') +
   xlab('Dim 1: - EI and older group migration (36.1% var)') +
   ylab('Dim 2: - Healthy and younger group migration (32.8% var)')
 
-
-fviz_nbclust(data, FUNcluster = kmeans)
-
+## function to check within-groups sum of squares 
 wssplot <- function(data, nc=15, seed=123){
   wss <- (nrow(data)-1)*sum(apply(data,2,var))
   for (i in 2:nc){
@@ -140,16 +123,13 @@ wssplot <- function(data, nc=15, seed=123){
   plot(1:nc, wss, type="b", xlab="Number of groups",
        ylab="Sum of squares within a group")}
 
-wssplot(data)
+wssplot(data) # check 'elbow' around 4 clusters
 
 
 ## Principal Components Analysis
+## sense check and understand which factors are influencing the cluster creation
 pca <- prcomp(data, center = TRUE)
-summary(pca)
-str(pca)
 
-ggbiplot(pca)
-ggbiplot(pca, labels = rownames(data))
 ggbiplot(pca, groups = as.character(fit$cluster)) + 
   theme_minimal() +
   scale_color_manual(values=c('#dd0031', '#53a9cd', '#744284', '#F39214')) +
@@ -157,42 +137,12 @@ ggbiplot(pca, groups = as.character(fit$cluster)) +
   ggtitle('PCA analyis at LA level - population mobility factors') +
   xlab('PC1 - EI and older group migration') +
   ylab('PC2 - Healthy and younger group migration')
-ggbiplot(pca, groups = as.character(fit$cluster), labels = rownames(data)) + 
-  theme_minimal() +
-  theme(legend.position = 'none') +
-  ggtitle('PCA analyis at LA level - population mobility factors') +
-  xlab('PC1 - ei and older group migration') +
-  ylab('PC2 - healthy and younger group migration')
 
 ## y axis is about healthy migration and young migration (PC2 - 32.8% var) reversed
 # x axis about economically inactive and older migration (PC1 - 36.1% var)
 
-ggbiplot(pca, choices = c(3, 4))
-ggbiplot(pca, labels = rownames(data), choices = c(3, 4))
-ggbiplot(pca, groups = as.character(fit$cluster), choices = c(3, 4)) + 
-  theme_minimal() +
-  theme(legend.position = 'none') +
-  ggtitle('PCA analyis at LA level - population mobility factors') +
-  xlab('PC3 - student vs EA migration') +
-  ylab('PC4 - Middle aged vs younger group migration')
-ggbiplot(pca, groups = as.character(fit$cluster), labels = rownames(data), choices = c(3, 4)) + 
-  theme_minimal() +
-  theme(legend.position = 'none') +
-  ggtitle('PCA analyis at LA level - population mobility factors') +
-  xlab('PC3 - ei and older group migration') +
-  ylab('PC4 - healthy and younger group migration')
-
-
 # Map cluster classification
   
-  # load packages
-  pacman::p_load(sf,
-                 XML,
-                 tmap,
-                 devtools, 
-                 viridis, 
-                 wesanderson)
-
 # import shp data
 #data were downloaded from https://geoportal.statistics.gov.uk/search?collection=Dataset&sort=name&tags=all(BDY_LAD%2CDEC_2011)
 save_object(object = 'LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.shp',
@@ -252,15 +202,10 @@ s3write_using(data # What R object we are saving
               , object = 'mobility_clusters_LA_v2.csv' # Name of the file to save to (include file type)
               , bucket = buck_clean) # Bucket name defined above
 
-
-
-
-
 # Join spatial data
 lad_shp <- left_join(lad_shp, data, by = c("lad11nm" = "geography"))
 
 tabyl(lad_shp$cluster)
-
 
 # Map of residential mobility classification
 map4_1 <- tm_shape(lad_shp) +
@@ -272,8 +217,3 @@ map4_1 <- tm_shape(lad_shp) +
             legend.bg.color = "white",
             legend.bg.alpha = 1)
 map4_1
-
-
-
-
-
