@@ -47,4 +47,4 @@ rsconnect/
 
 *.html
 *.csv
-
+*.Rmd 
