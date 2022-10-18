@@ -16,13 +16,10 @@ pacman::p_load(tidyverse, # general data manipulation & cluster analysis
                devtools,
                ggbiplot,
                janitor,
-               
                sf, # mapping and vis
                XML,
                tmap,
-               devtools, 
-               viridis, 
-               wesanderson)
+               devtools)
                
 #install_github('vqv/ggbiplot') # only available on GitHub I believe
 

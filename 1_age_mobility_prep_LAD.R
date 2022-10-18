@@ -9,19 +9,12 @@ source("0_file_pathways.R")
 #load packages
 pacman::p_load(haven, 
                dplyr, 
-               survey, 
                janitor,
-               questionr, 
                epiDisplay, 
                rio, 
-               ggplot2, 
-               apyramid,
-               magrittr, 
                stringr, 
                here, 
-               aws.s3,
-               readr,
-               matrixStats)
+               aws.s3)
 
 
 ## data were downloaded from: https://www.nomisweb.co.uk/census/2011/ukmig001

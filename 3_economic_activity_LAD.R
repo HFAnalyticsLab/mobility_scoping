@@ -15,19 +15,13 @@ source("0_file_pathways.R")
 #load packages
 pacman::p_load(haven, 
                dplyr, 
-               survey, 
                janitor,
-               questionr, 
                epiDisplay, 
                rio, 
-               ggplot2, 
-               apyramid,
-               magrittr, 
                stringr, 
                here, 
-               aws.s3,
-               readr,
-               matrixStats)
+               aws.s3, 
+               readr)
 
 
 # data were downloaded from: https://www.nomisweb.co.uk/census/2011/ukmig006
@@ -304,8 +298,7 @@ s3write_using(tibble_ea2 # What R object we are saving
 pacman::p_load(sf,
                XML,
                tmap,
-               devtools, 
-               viridis)
+               devtools)
 
 # import shp data
 #data were downloaded from https://geoportal.statistics.gov.uk/search?collection=Dataset&sort=name&tags=all(BDY_LAD%2CDEC_2011)

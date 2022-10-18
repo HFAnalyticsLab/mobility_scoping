@@ -9,20 +9,13 @@ source("0_file_pathways.R")
 #load packages
 pacman::p_load(haven, 
                dplyr, 
-               survey, 
                janitor,
-               questionr, 
-               gtsummary,
                epiDisplay, 
                rio, 
-               ggplot2, 
-               apyramid,
-               magrittr, 
                stringr, 
                here, 
-               aws.s3,
-               readr,
-               matrixStats,
+               ggplot2, 
+               aws.s3, 
                tidyverse)
 
 
