@@ -162,11 +162,5 @@ lsoa_shp %>%
 # map4
 
 
-##Work out 2010-2011 change 
-
-cdrc_lsoa_clean %>% 
-  select(chn2010,chn2011) %>% 
-  mutate(diff_2010_2011=chn)
-
 
 
