@@ -49,6 +49,8 @@ pacman::p_load(sf,
 
 # read LAD boundaries from 2021 (to match Levelling Up boundaries)
 # import shp data
+      # Note: the shapefiles for May 2021 do not seem to be available anymore
+      # Dec 2021 boundaries can be downloaded here: https://geoportal.statistics.gov.uk/datasets/ons::local-authority-districts-december-2021-uk-bfe/explore
 save_object(object = 'LAD_shapefile_data/LAD_MAY_2021_UK_BFE_V2.shp',
             file = here::here("shapefiles", "eng.shp"),
             bucket = buck_data)

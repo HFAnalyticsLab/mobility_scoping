@@ -29,6 +29,7 @@ netmig_dta <- s3read_using(import,
 dim(netmig_dta)      #16 variables, 360 observations
 
 # import lookup table
+    # Data source: https://geoportal.statistics.gov.uk/datasets/lower-tier-local-authority-to-upper-tier-local-authority-december-2016-lookup-in-england-and-wales/explore
 lookup <- s3read_using(import, 
                        object = 'LTLA_UTLA_lookup_Dec2016.csv', 
                        bucket = buck_data) # File to open 

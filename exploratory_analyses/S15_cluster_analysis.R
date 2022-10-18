@@ -183,6 +183,7 @@ pacman::p_load(sf,
                wesanderson)
 
 # import shp data
+    # the shapefiles were downloaded from: https://geoportal.statistics.gov.uk/datasets/ons::local-authority-districts-december-2011-boundaries-ew-bfc/explore 
 save_object(object = 'LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.shp',
             bucket = buck_data,
             file = here::here("shapefiles", "eng.shp"))

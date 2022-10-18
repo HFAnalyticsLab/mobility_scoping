@@ -20,6 +20,7 @@ pacman::p_load(sf,
 
 # Option 2: trying command above with save_object to save directly into R workspace without manually downloading
   # Need to download all 6 files in folder for .shp to load correctly
+  # shapefiles were downloaded from https://geoportal.statistics.gov.uk/datasets/ons::middle-layer-super-output-areas-december-2011-boundaries-super-generalised-clipped-bsc-ew-v3
 save_object(object = 'MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.shp',
             file = here::here("shapefiles", "eng.shp"), 
             bucket = buck_data)

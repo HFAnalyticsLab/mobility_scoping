@@ -34,7 +34,7 @@ data <- s3read_using(FUN = fread,
 
 
 #Merge with life expectancy data
-## data were downloaded from: https://www.nomisweb.co.uk/census/2011/ukmig006
+## data were downloaded from: https://www.ons.gov.uk/datasets/life-expectancy-by-local-authority/editions/time-series/versions/1
 le_dta <- s3read_using(import, 
                        object = 'life_expectancy_LA.xlsx', 
                        bucket = buck_data) 

@@ -29,6 +29,7 @@ dim(EA_dta)      #183 variables, 7201 observations
 
 
 #load shp files 
+    # shapefiles were downloaded from https://geoportal.statistics.gov.uk/datasets/ons::middle-layer-super-output-areas-december-2011-boundaries-super-generalised-clipped-bsc-ew-v3
 save_object(object = 'MSOA_shapefile_data/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.shp',
             file = here::here("shapefiles", "eng.shp"), 
             bucket = buck_data)
@@ -509,6 +510,7 @@ write.csv(eng_dta2, "eng_dta2.csv")
 # Maps for LAD level ------------------------------------------------------
 
 # import shp data
+    # the shapefiles were downloaded from: https://geoportal.statistics.gov.uk/datasets/ons::local-authority-districts-december-2011-boundaries-ew-bfc/explore 
 save_object(object = 'LAD_shapefile_data/Local_Authority_Districts_(December_2011)_Boundaries_EW_BFC.shp',
             bucket = buck_data,
             file = here::here("shapefiles", "eng.shp"))

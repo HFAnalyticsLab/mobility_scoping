@@ -32,6 +32,7 @@ pacman::p_load(haven,
 
 
 # import shp data
+      # shapefiles were downloaded from: https://geoportal.statistics.gov.uk/search?collection=Dataset&sort=name&tags=all(BDY_OA%2CDEC_2011)
 save_object(object = 'OA_shapefile_data/Output_Areas__December_2011__Boundaries_EW_BFC.shp',
             file = here::here("shapefiles", "eng.shp"), 
             bucket = buck_data)

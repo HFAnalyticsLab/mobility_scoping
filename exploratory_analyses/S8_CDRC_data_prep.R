@@ -25,6 +25,7 @@ pacman::p_load(tidyverse,
 #Load LSOA shape file 
 
 # Need to download all 6 files in folder for .shp to load correctly
+      # shapefiles were downloaded from https://geoportal.statistics.gov.uk/datasets/ons::lower-layer-super-output-areas-december-2011-boundaries-full-extent-bfe-ew-v3
 save_object(object = 'LSOA_shapefile_data/Lower_Layer_Super_Output_Areas__December_2011__Boundaries_Full_Extent__BFE__EW_V3.shp',
             file = here::here("shapefiles", "eng.shp"), 
             bucket = buck_data)
