@@ -4,7 +4,7 @@ Project Status: [completed]
 ## Project Description
 Residential mobility - people moving where they live between local areas in the UK - is one factor shaping health in local areas. People who are young and in good health tend to move to areas where many other young and healthy people live. This has the potential to reinforce existing geographic inequalities in health.
 
-This analysis aims to describe residential mobility in England and Wales, according to self-reported health, age and economic activity. We also aimed to identify different types of residential mobility at the local authority level, and compare the prevalence of overweight/obesity and common mental health disorders between local authorities of each residential mobility type. 
+This analysis aimed to describe residential mobility in England and Wales, according to self-reported health, age and economic activity. We also aimed to identify different types of residential mobility at the local authority level, and compare the prevalence of overweight/obesity and common mental health disorders between local authorities of each residential mobility type. 
 
 ## Outputs
 The findings have been published on the [Health Foundation website](add URL).
@@ -22,9 +22,9 @@ All data used in this analysis are open data. We have indicated in the main anal
 - Script 3 includes the code for analysis of residential mobility by economic activity. 
 - Script 4 includes the code for the cluster analysis, which we used to classify local authorities in 4 residential mobility types. 
 
-The exploratory_analyses folder includes scripts used for exploratory analyses, including analyses at the output area and middle-super output area levels, and supplementary analyses at the local authority level which were not included in the publication. 
+The exploratory_analyses folder includes scripts used for exploratory analyses, including analyses at the output area and middle-super output area levels, and supplementary analyses at the local authority level which were not included in the publication. These were exploratory analyses and some errors may remain in the code.
 
-These scripts can be used to perform a similar analysis using the 2021 Census data once released in 2023, this would require downloading the new datasets and updating the scripts with them. We used Amazon SW3 storage, scripts may need to be updated based on local storage structure.
+These scripts can be used to perform a similar analysis using the 2021 Census data (once released in 2023), this would require downloading the new datasets and updating the scripts with them. We used Amazon SW3 storage, scripts may need to be updated based on local storage structure.
 
 ### Requirements
 These scripts were written in R. The following R packages (available on CRAN) are needed:
@@ -36,7 +36,7 @@ These scripts were written in R. The following R packages (available on CRAN) ar
 * Anne Alarilla
 * Jay Hughes
 
-Mai Stafford, David Finch and Charles Tallack as part of the project team provided feedback which was used to update the code.
+Mai Stafford, David Finch and Charles Tallack provided feedback as part of the project team, which was used to update the code.
 
 ## License
 This project is licensed under the [MIT License](https://github.com/HFAnalyticsLab/domcare_hospital_LBBD/blob/master/LICENSE).

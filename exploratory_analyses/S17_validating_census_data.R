@@ -23,7 +23,7 @@ pacman::p_load(tidyverse,
 
 # Data load ---------------------------------------------------------------
 
-
+#Accessed from: https://data.cdrc.ac.uk/dataset/cdrc-residential-mobility-index
 cdrc_lad<-s3read_using(read_csv # Which function are we using to read
                        , object = 'CDRC_residential_mobility_index_LAD.csv' # File to open
                        , bucket = buck_data) # Bucket name defined above
@@ -147,7 +147,8 @@ corr
 
 
 # validating against new census data --------------------------------------
-
+#Data downloaded from: https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates/bulletins/populationandhouseholdestimatesenglandandwales/census2021
+ #> Figure 3: Population change between 2011 and 2021, local authorities in England and Wales
 new_census <- s3read_using(import # Which function are we using to read
                            , object = 'pop_change.csv' # File to open
                            , bucket = buck_clean) # Bucket name defined above
@@ -157,7 +158,7 @@ new_census<-new_census %>%
   clean_names() %>% 
   dplyr::select(la_code:percentage_change) %>% 
   dplyr::filter(., grepl("E|W", la_code)) %>% 
-  mutate(across(everything(), gsub, pattern=",",replacement="")) %>% 
+  mutate_all(gsub, pattern=",",replacement="") %>% 
   mutate(percentage_change=as.numeric(percentage_change),
          usual_resident_population_2011=as.numeric(usual_resident_population_2011),
          usual_resident_population_2021 =as.numeric(usual_resident_population_2021))
@@ -213,7 +214,7 @@ corr
 
 # Validating against 2011 cdrc data ---------------------------------------
 
-
+#Requested from https://data.cdrc.ac.uk/dataset/cdrc-residential-mobility-index 
 cdrc_lad_2011<-s3read_using(read_csv # Which function are we using to read
                        , object = 'CDRC_LAD_2011.csv' # File to open
                        , bucket = buck_data) # Bucket name defined above
