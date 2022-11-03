@@ -58,7 +58,8 @@ dta2021 <- dta2021 %>%
     mutate(geography = replace(geography, geography == "Bristol, City of", "Bristol")) %>%
     mutate(geography = replace(geography, geography == "Rhondda Cynon Taff", "Rhondda Cynon Taf"))
 
-    # merge local authorities which merged between 2011 and 2021
+  # merge local authorities which merged between 2011 and 2021
+    # NOTE: this dataset was made by looking at which LAs did not merge to the 2021 file, then manually searching the internet for which LAs had merged to form these
   lookup <- import(here::here("2021_census_data", "2021_2011_LA_lookup.xlsx"))
   dta2011 <- left_join(dta2011, lookup, by = c("geography" = "geography_2011"))
   dta2011 <- dta2011 %>%
