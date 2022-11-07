@@ -35,7 +35,7 @@ dta2021 <- dta2021 %>%
   select(-migrant_indicator_5_categories_code, -lower_tier_local_authorities_code) 
 
 #reshape to wide
-  dta2021 <- reshape(dta2021, idvar = "lower_tier_local_authorities_label", timevar = "migrant_indicator_5_categories_label", direction = "wide")
+  dta2021 <- stats::reshape(dta2021, idvar = "lower_tier_local_authorities_label", timevar = "migrant_indicator_5_categories_label", direction = "wide")
   dta2021 <- dta2021 %>%
     clean_names()
   names(dta2021)[2:6]<-c('n_na', 'n_samead', 'n_temp' , 'n_inmig_uk','n_inmig_for')
