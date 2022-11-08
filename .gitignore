@@ -44,6 +44,8 @@ shapefiles/
 rsconnect/
 
 0_file_pathways.R
+exploratory_analyses/OLD_S20_comparing_2021_census.R
+2021_census_data/UR_ltla_migrant_ind.xlsx
 
 *.html
 *.csv
