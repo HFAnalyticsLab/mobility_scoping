@@ -16,15 +16,30 @@ pacman::p_load(tidyverse,
                here, 
                aws.s3,
                readr,
-               Hmisc)
+               Hmisc, 
+               nomisr)
 
 
 
 # Data load ---------------------------------------------------------------
 
-    # data were downloaded from https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates/articles/demographyandmigrationdatacontent/2022-11-02
-    # saved in R workbench rather than S3 buckets because of access issues on the day of analysis
-dta2021 <- import(here::here("2021_census_data", "UR_ltla_migrant_ind.xlsx"))
+# the following github page was useful for understanding the nomisr package: https://github.com/ropensci/nomisr
+
+# find dataset id
+search <- nomis_search(name = "*Migrant*")
+tibble::glimpse(search)
+View(search)
+  # dataset id for migrant indicator is NM_2039_1
+
+
+# find geography code for all local authority districts
+geography <- nomis_get_metadata("NM_2039_1", "geography", "TYPE")
+tail(geography)
+  # geography code is TYPE154
+
+# import data
+dta2021 <- nomis_get_data( id = "NM_2039_1", time = "latest",
+                        geography = "TYPE154") 
 
 # Calculate percent inmigration among usual residents
     # NOTE: we are not using midyear population (as with rest of analysis) because we do not have information on outmigrants
@@ -32,18 +47,20 @@ dta2021 <- import(here::here("2021_census_data", "UR_ltla_migrant_ind.xlsx"))
 
 dta2021 <- dta2021 %>%
   clean_names() %>%
-  select(-migrant_indicator_5_categories_code, -lower_tier_local_authorities_code) 
+  select(geography_name, c2021_migind_4_name, obs_value) 
 
 #reshape to wide
-  dta2021 <- stats::reshape(dta2021, idvar = "lower_tier_local_authorities_label", timevar = "migrant_indicator_5_categories_label", direction = "wide")
+  dta2021 <- dta2021 %>%
+    pivot_wider(names_from = "c2021_migind_4_name", values_from = "obs_value")
   dta2021 <- dta2021 %>%
     clean_names()
-  names(dta2021)[2:6]<-c('n_na', 'n_samead', 'n_temp' , 'n_inmig_uk','n_inmig_for')
+  names(dta2021)[2:6]<-c('usual_res', 'n_samead', 'n_temp' , 'n_inmig_uk','n_inmig_for')
   
     
 # calculate % inmigration
   dta2021 <- dta2021 %>%
-    mutate(p_inmig_2021 = (n_inmig_uk + n_inmig_for) / (n_na + n_samead + n_temp + n_inmig_uk + n_inmig_for) *100)
+    mutate(p_inmig_2021 = (n_inmig_uk + n_inmig_for) / usual_res *100)
+
 
   
 # Import 2011 data -------------------------------------------------------------
@@ -90,7 +107,7 @@ dta2021 <- dta2021 %>%
   
   
 # Merge two datasets -----------------------------------------------------------
-  dta2021 <- left_join(dta2021, dta2011, by = c("lower_tier_local_authorities_label" = "geography_2021"))
+  dta2021 <- left_join(dta2021, dta2011, by = c("geography_name" = "geography_2021"))
   dta2021 <- dta2021 %>% 
     distinct() 
 
