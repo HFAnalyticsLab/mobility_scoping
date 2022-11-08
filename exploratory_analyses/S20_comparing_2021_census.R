@@ -77,7 +77,8 @@ dta2021 <- dta2021 %>%
 
   # merge local authorities which merged between 2011 and 2021
     # NOTE: this dataset was made by looking at which LAs did not merge to the 2021 file, then manually searching the internet for which LAs had merged to form these
-  lookup <- import(here::here("2021_census_data", "2021_2011_LA_lookup.xlsx"))
+    # saved on our github page https://github.com/HFAnalyticsLab/mobility_scoping/blob/main/2021_census_data/2021_2011_LA_lookup.xlsx
+   lookup <- import(here::here("2021_census_data", "2021_2011_LA_lookup.xlsx"))
   dta2011 <- left_join(dta2011, lookup, by = c("geography" = "geography_2011"))
   dta2011 <- dta2011 %>%
     mutate(geography_2021 = case_when(
@@ -95,12 +96,13 @@ dta2021 <- dta2021 %>%
   
   # calculate % inmigration
   dta2011 <- dta2011 %>%
-    mutate(p_inmig_2011 = (under_34_inmig_m + x35_to_64_inmig_m + x65plus_inmig_m) / (under_34_usualres11_m + x35_to_64_usualres11_m + x65plus_usualres11_m) *100)
+    mutate(usualres_2011 = under_34_usualres11_m + x35_to_64_usualres11_m + x65plus_usualres11_m,
+      p_inmig_2011 = (under_34_inmig_m + x35_to_64_inmig_m + x65plus_inmig_m) / (usualres_2011) *100)
   
   
   # keep only name and p_inmig
   dta2011 <- dta2011 %>%
-    select(geography_2021, p_inmig_2011)
+    select(geography_2021, p_inmig_2011, usualres_2011)
   
   
   
@@ -132,4 +134,21 @@ dta2021 <- dta2021 %>%
   dta2021 <- dta2021 %>%
     mutate(diff=(p_inmig_2021-p_inmig_2011))
 
-    
+  
+  
+  # Check correlation between usual residents
+  
+  #Scatter plot
+  plot(dta2021$usualres_2011, dta2021$usual_res,
+       xlim= c(0, 1200000),
+       ylim = c(0,1200000))
+  
+  # add reference line
+  abline(coef=c(0,1))
+  
+  # correlation
+  dtacorr <- dta2021 %>%
+    select(usualres_2011, usual_res)
+  corr <- rcorr(as.matrix(dtacorr), type="spearman")
+  corr  
+  
